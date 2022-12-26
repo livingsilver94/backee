@@ -1,9 +1,11 @@
 package service
 
 import (
+	"strings"
+
+	"github.com/elliotchance/orderedmap/v2"
 	"github.com/goccy/go-yaml"
-	"github.com/zyedidia/generic/btree"
-	"github.com/zyedidia/generic/hashset"
+	"github.com/hashicorp/go-set"
 )
 
 type name = string
@@ -19,7 +21,7 @@ type Service struct {
 	Finalize   *string            `yaml:"finalize"`
 }
 
-func NewFromYaml(name string, yml []byte) (Service, error) {
+func NewFromYAML(name string, yml []byte) (Service, error) {
 	var srv Service
 	err := yaml.Unmarshal(yml, &srv)
 	if err != nil {
@@ -30,7 +32,19 @@ func NewFromYaml(name string, yml []byte) (Service, error) {
 }
 
 type DepSet struct {
-	hashset.Set[string]
+	*set.Set[string]
+}
+
+func NewDepSet(capacity int) DepSet {
+	return DepSet{set.New[string](capacity)}
+}
+
+func NewDepSetFrom(items []string) DepSet {
+	return DepSet{set.From(items)}
+}
+
+func (ds DepSet) Equal(ds2 DepSet) bool {
+	return ds.Set.Equal(ds2.Set)
 }
 
 func (ds *DepSet) UnmarshalYAML(data []byte) error {
@@ -39,14 +53,32 @@ func (ds *DepSet) UnmarshalYAML(data []byte) error {
 	if err != nil {
 		return err
 	}
-	for _, dep := range deps {
-		ds.Put(dep)
-	}
+	*ds = NewDepSetFrom(deps)
 	return nil
 }
 
 type LinkMap struct {
-	btree.Tree[string, LinkParams]
+	*orderedmap.OrderedMap[string, LinkParams]
+}
+
+func NewLinkMap() LinkMap {
+	return LinkMap{orderedmap.NewOrderedMap[string, LinkParams]()}
+}
+
+func (lm *LinkMap) Equal(lm2 LinkMap) bool {
+	if lm.Len() != lm2.Len() {
+		return false
+	}
+	el1 := lm.Front()
+	el2 := lm2.Front()
+	for el1 != nil {
+		if el1.Key != el2.Key || el1.Value != el2.Value {
+			return false
+		}
+		el1 = el1.Next()
+		el2 = el2.Next()
+	}
+	return true
 }
 
 func (lm *LinkMap) UnmarshalYAML(data []byte) error {
@@ -55,15 +87,35 @@ func (lm *LinkMap) UnmarshalYAML(data []byte) error {
 	if err != nil {
 		return err
 	}
+	*lm = NewLinkMap()
 	for path, params := range m {
-		lm.Put(path, params)
+		lm.Set(path, params)
 	}
 	return nil
 }
 
 type LinkParams struct {
-	Path string
-	Mode uint16
+	Path string `yaml:"path"`
+	Mode uint16 `yaml:"mode"`
+}
+
+func (lp *LinkParams) UnmarshalYAML(data []byte) error {
+	var path string
+	err := yaml.Unmarshal(data, &path)
+	if err != nil {
+		// FIXME: https://github.com/goccy/go-yaml/issues/338
+		if !strings.Contains(err.Error(), "of type") {
+			return err
+		}
+		type noRecursion LinkParams
+		var value noRecursion
+		err := yaml.Unmarshal(data, &value)
+		*lp = LinkParams(value)
+		return err
+	}
+	lp.Path = path
+	lp.Mode = 0644
+	return nil
 }
 
 type VarKind struct{}

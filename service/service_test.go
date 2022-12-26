@@ -1,18 +1,147 @@
 package service_test
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/livingsilver94/backee/service"
 )
 
+const name = "testName"
+
 func TestParseEmptyDocument(t *testing.T) {
-	const name = "testName"
-	srv, err := service.NewFromYaml(name, []byte("# This is an empty document"))
+	srv, err := service.NewFromYAML(name, []byte("# This is an empty document"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if srv.Name != name {
 		t.Fatalf("expected name %s. Found %s", name, srv.Name)
+	}
+}
+
+func TestParseDepends(t *testing.T) {
+	expect := service.NewDepSetFrom([]string{"service1", "service2"})
+	const doc = `
+depends:
+  - service1
+  - service2
+  - service1`
+	srv, err := service.NewFromYAML(name, []byte(doc))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !srv.Depends.Equal(expect) {
+		t.Fatalf("expected dependencies %v. Found %v", expect, srv.Depends)
+	}
+}
+
+func TestParseSetup(t *testing.T) {
+	const expect = "echo \"Test!\"\n# Another line."
+	const doc = `
+setup: |
+  echo "Test!"
+  # Another line.`
+	srv, err := service.NewFromYAML(name, []byte(doc))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if srv.Setup == nil {
+		t.Fatal("nil value")
+	}
+	if *srv.Setup != expect {
+		t.Fatalf("expected setup %q. Found %q", expect, *srv.Setup)
+	}
+}
+
+func TestParsePkgManager(t *testing.T) {
+	expect := []string{"sudo", "apt-get", "install", "-y"}
+	const doc = `
+pkgmanager: ["sudo", "apt-get", "install", "-y"]`
+	srv, err := service.NewFromYAML(name, []byte(doc))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(srv.PkgManager, expect) {
+		t.Fatalf("expected pkgmanager %v. Found %v", expect, srv.PkgManager)
+	}
+}
+
+func TestParsePackages(t *testing.T) {
+	expect := []string{"nano", "micro", "zsh"}
+	const doc = `
+packages:
+  - nano
+  - micro
+  - zsh`
+	srv, err := service.NewFromYAML(name, []byte(doc))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(srv.Packages, expect) {
+		t.Fatalf("expected packages %v. Found %v", expect, srv.Packages)
+	}
+}
+
+func TestParseLinks(t *testing.T) {
+	expect := service.NewLinkMap()
+	for path, params := range map[string]service.LinkParams{
+		"/my/path/file1": {Path: "/tmp/alias1", Mode: 0o000},
+		"my/path/file2":  {Path: "/tmp/alias2", Mode: 0o755},
+	} {
+		expect.Set(path, params)
+	}
+	const doc = `
+links:
+  /my/path/file1:
+    path: /tmp/alias1
+    mode: 0o000
+  my/path/file2:
+    path: /tmp/alias2
+    mode: 0o755`
+	srv, err := service.NewFromYAML(name, []byte(doc))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !srv.Links.Equal(expect) {
+		t.Fatalf("expected packages %v. Found %v", expect, srv.Links)
+	}
+}
+
+func TestParseLinksString(t *testing.T) {
+	expect := service.NewLinkMap()
+	for path, params := range map[string]service.LinkParams{
+		"/my/path/file1": {Path: "/tmp/alias1", Mode: 0644},
+		"my/path/file2":  {Path: "/tmp/alias2", Mode: 0o644},
+	} {
+		expect.Set(path, params)
+	}
+	const doc = `
+links:
+  /my/path/file1: /tmp/alias1
+  my/path/file2: /tmp/alias2`
+	srv, err := service.NewFromYAML(name, []byte(doc))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !srv.Links.Equal(expect) {
+		t.Fatalf("expected packages %v. Found %v", expect, srv.Links)
+	}
+}
+
+func TestParseFinalize(t *testing.T) {
+	const expect = "echo \"Test!\"\n# Another line."
+	const doc = `
+finalize: |
+  echo "Test!"
+  # Another line.`
+	srv, err := service.NewFromYAML(name, []byte(doc))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if srv.Finalize == nil {
+		t.Fatal("nil value")
+	}
+	if *srv.Finalize != expect {
+		t.Fatalf("expected finalize script %q. Found %q", expect, *srv.Finalize)
 	}
 }
