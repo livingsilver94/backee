@@ -1,0 +1,46 @@
+package repo
+
+import (
+	"fmt"
+
+	"github.com/hashicorp/go-set"
+	"github.com/livingsilver94/backee/service"
+)
+
+type DepGraph struct {
+	graph []DepSet
+}
+
+func NewDepGraph(capacity int) DepGraph {
+	return DepGraph{
+		graph: make([]DepSet, 0, capacity),
+	}
+}
+
+const depGraphSetSize = 10
+
+func (dg *DepGraph) Insert(level int, srv *service.Service) {
+	if level > dg.Depth() {
+		panic(fmt.Sprintf("inserting dep on level %d but level %d does not exist", level, level-1))
+	}
+	if level == dg.Depth()-1 {
+		dg.graph = append(dg.graph, NewDepSet(depGraphSetSize))
+	}
+	dg.Level(level).Insert(srv)
+}
+
+func (dg *DepGraph) Depth() int {
+	return len(dg.graph)
+}
+
+func (dg *DepGraph) Level(index int) *DepSet {
+	return &dg.graph[index]
+}
+
+type DepSet struct {
+	*set.Set[*service.Service]
+}
+
+func NewDepSet(capacity int) DepSet {
+	return DepSet{set.New[*service.Service](capacity)}
+}
