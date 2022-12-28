@@ -69,6 +69,16 @@ func (repo FSRepo) AllServices() ([]*service.Service, error) {
 	return services, nil
 }
 
+const depGraphDefaultDepth = 4
+
+func (repo FSRepo) ResolveDeps(srv *service.Service) (DepGraph, error) {
+	graph := NewDepGraph(depGraphDefaultDepth)
+	if srv.Depends == nil {
+		return graph, nil
+	}
+	return graph, repo.resolveDeps(&graph, 0, srv.Depends)
+}
+
 func (repo FSRepo) DataDir() (string, error) {
 	dir := filepath.Join(repo.baseDir, fsRepoBaseDataDir)
 	return filepath.Abs(dir)
@@ -77,4 +87,25 @@ func (repo FSRepo) DataDir() (string, error) {
 func (repo FSRepo) LinkDir() (string, error) {
 	dir := filepath.Join(repo.baseDir, fsRepoBaseLinkDir)
 	return filepath.Abs(dir)
+}
+
+func (repo FSRepo) resolveDeps(graph *DepGraph, level int, deps *service.DepSet) error {
+	for _, depName := range deps.List() {
+		srv, err := repo.Service(depName)
+		if err != nil {
+			return err
+		}
+		graph.Insert(level, srv)
+	}
+	if level == graph.Depth() {
+		return nil
+	}
+
+	// Gather dependencies of dependencies.
+	level += 1
+	subdeps := service.NewDepSet(depSetDefaultCap)
+	for _, subdep := range graph.Level(level).List() {
+		subdeps.InsertAll(subdep.Depends.List())
+	}
+	return repo.resolveDeps(graph, level, &subdeps)
 }

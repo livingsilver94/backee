@@ -17,14 +17,14 @@ func NewDepGraph(capacity int) DepGraph {
 	}
 }
 
-const depGraphSetSize = 10
+const depSetDefaultCap = 10
 
 func (dg *DepGraph) Insert(level int, srv *service.Service) {
 	if level > dg.Depth() {
 		panic(fmt.Sprintf("inserting dep on level %d but level %d does not exist", level, level-1))
 	}
 	if level == dg.Depth()-1 {
-		dg.graph = append(dg.graph, NewDepSet(depGraphSetSize))
+		dg.graph = append(dg.graph, NewDepSet(depSetDefaultCap))
 	}
 	dg.Level(level).Insert(srv)
 }
