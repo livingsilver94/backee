@@ -38,9 +38,9 @@ func (dg *DepGraph) Level(index int) *DepSet {
 }
 
 type DepSet struct {
-	*set.Set[*service.Service]
+	*set.HashSet[*service.Service, string]
 }
 
 func NewDepSet(capacity int) DepSet {
-	return DepSet{set.New[*service.Service](capacity)}
+	return DepSet{set.NewHashSet[*service.Service, string](capacity)}
 }

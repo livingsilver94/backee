@@ -42,6 +42,10 @@ func NewFromYAMLReader(name string, rd io.Reader) (*Service, error) {
 	return &srv, nil
 }
 
+func (srv *Service) Hash() string {
+	return srv.Name
+}
+
 type DepSet struct {
 	*set.Set[string]
 }
