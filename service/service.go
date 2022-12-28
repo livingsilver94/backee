@@ -1,6 +1,7 @@
 package service
 
 import (
+	"io"
 	"strings"
 
 	"github.com/elliotchance/orderedmap/v2"
@@ -21,14 +22,24 @@ type Service struct {
 	Finalize   *string            `yaml:"finalize"`
 }
 
-func NewFromYAML(name string, yml []byte) (Service, error) {
+func NewFromYAML(name string, yml []byte) (*Service, error) {
 	var srv Service
 	err := yaml.Unmarshal(yml, &srv)
 	if err != nil {
-		return Service{}, err
+		return nil, err
 	}
 	srv.Name = name
-	return srv, nil
+	return &srv, nil
+}
+
+func NewFromYAMLReader(name string, rd io.Reader) (*Service, error) {
+	var srv Service
+	err := yaml.NewDecoder(rd).Decode(&srv)
+	if err != nil {
+		return nil, err
+	}
+	srv.Name = name
+	return &srv, nil
 }
 
 type DepSet struct {
