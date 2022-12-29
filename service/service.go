@@ -9,17 +9,15 @@ import (
 	"github.com/hashicorp/go-set"
 )
 
-type name = string
-
 type Service struct {
-	Name       string             `yaml:"-"`
-	Depends    *DepSet            `yaml:"depends"`
-	Setup      *string            `yaml:"setup"`
-	PkgManager []string           `yaml:"pkgmanager"`
-	Packages   []string           `yaml:"packages"`
-	Links      *LinkMap           `yaml:"links"`
-	Variables  map[string]VarKind `yaml:"variables"`
-	Finalize   *string            `yaml:"finalize"`
+	Name       string              `yaml:"-"`
+	Depends    *DepSet             `yaml:"depends"`
+	Setup      *string             `yaml:"setup"`
+	PkgManager []string            `yaml:"pkgmanager"`
+	Packages   []string            `yaml:"packages"`
+	Links      *LinkMap            `yaml:"links"`
+	Variables  map[string]VarValue `yaml:"variables"`
+	Finalize   *string             `yaml:"finalize"`
 }
 
 func NewFromYAML(name string, yml []byte) (*Service, error) {
@@ -123,9 +121,9 @@ func (lp *LinkParams) UnmarshalYAML(data []byte) error {
 			return err
 		}
 		type noRecursion LinkParams
-		var value noRecursion
-		err := yaml.Unmarshal(data, &value)
-		*lp = LinkParams(value)
+		var noRec noRecursion
+		err := yaml.Unmarshal(data, &noRec)
+		*lp = LinkParams(noRec)
 		return err
 	}
 	lp.Path = path
@@ -133,4 +131,33 @@ func (lp *LinkParams) UnmarshalYAML(data []byte) error {
 	return nil
 }
 
-type VarKind struct{}
+type VarKind string
+
+const (
+	ClearText VarKind = "cleartext"
+	Secret    VarKind = "secret"
+)
+
+type VarValue struct {
+	Kind  VarKind `yaml:"kind"`
+	Value string  `yaml:"value"`
+}
+
+func (val *VarValue) UnmarshalYAML(data []byte) error {
+	var value string
+	err := yaml.Unmarshal(data, &value)
+	if err != nil {
+		// FIXME: https://github.com/goccy/go-yaml/issues/338
+		if !strings.Contains(err.Error(), "of type") {
+			return err
+		}
+		type noRecursion VarValue
+		var noRec noRecursion
+		err := yaml.Unmarshal(data, &noRec)
+		*val = VarValue(noRec)
+		return err
+	}
+	val.Kind = ClearText
+	val.Value = value
+	return nil
+}
