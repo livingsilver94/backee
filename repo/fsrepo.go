@@ -79,13 +79,13 @@ func (repo FSRepo) ResolveDeps(srv *service.Service) (DepGraph, error) {
 	return graph, repo.resolveDeps(&graph, 0, srv.Depends)
 }
 
-func (repo FSRepo) DataDir() (string, error) {
-	dir := filepath.Join(repo.baseDir, fsRepoBaseDataDir)
+func (repo FSRepo) DataDir(name string) (string, error) {
+	dir := filepath.Join(repo.baseDir, name, fsRepoBaseDataDir)
 	return filepath.Abs(dir)
 }
 
-func (repo FSRepo) LinkDir() (string, error) {
-	dir := filepath.Join(repo.baseDir, fsRepoBaseLinkDir)
+func (repo FSRepo) LinkDir(name string) (string, error) {
+	dir := filepath.Join(repo.baseDir, name, fsRepoBaseLinkDir)
 	return filepath.Abs(dir)
 }
 
