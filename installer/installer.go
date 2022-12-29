@@ -3,6 +3,7 @@ package installer
 import (
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/livingsilver94/backee/repo"
 	"github.com/livingsilver94/backee/service"
@@ -63,9 +64,66 @@ func (inst Installer) install(srv *service.Service, ilist *installedList) error 
 	if ilist.contains(srv.Name) {
 		return nil
 	}
-	// TODO installation process.
+	performers := []performer{
+		inst.perform_setup,
+		inst.perform_pkg_installation,
+		inst.perform_link_installation,
+		inst.perform_finalizer,
+	}
+	for _, perf := range performers {
+		err := perf(srv)
+		if err != nil {
+			return err
+		}
+	}
 	ilist.insert(srv.Name)
 	return nil
+}
+
+func (Installer) perform_setup(srv *service.Service) error {
+	if srv.Setup == nil {
+		return nil
+	}
+	return runScript(*srv.Setup)
+}
+
+func (Installer) perform_pkg_installation(srv *service.Service) error {
+	if srv.Packages == nil {
+		return nil
+	}
+	args := make([]string, 0, len(srv.PkgManager[1:])+len(srv.Packages))
+	args = append(args, srv.PkgManager[1:]...)
+	args = append(args, srv.Packages...)
+	return runProcess(srv.PkgManager[0], args...)
+}
+
+func (inst Installer) perform_link_installation(srv *service.Service) error {
+	return nil
+}
+
+func (inst Installer) perform_finalizer(srv *service.Service) error {
+	if srv.Finalize == nil {
+		return nil
+	}
+	replacements := make([]string, 0, len(srv.Variables)*2+2)
+	for key, val := range srv.Variables {
+		switch val.Kind {
+		case service.ClearText:
+			replacements = append(replacements, service.VarPlaceholder(key))
+			replacements = append(replacements, val.Value)
+		case service.Secret:
+			// TODO
+		}
+	}
+	datadir, err := inst.repository.DataDir()
+	if err != nil {
+		return err
+	}
+	replacements = append(replacements, service.VarPlaceholder(service.VariableDatadir))
+	replacements = append(replacements, datadir)
+
+	script := strings.NewReplacer(replacements...).Replace(*srv.Finalize)
+	return runScript(script)
 }
 
 func runProcess(name string, arg ...string) error {
@@ -82,3 +140,5 @@ func runScript(script string) error {
 		script,
 	)
 }
+
+type performer func(*service.Service) error
