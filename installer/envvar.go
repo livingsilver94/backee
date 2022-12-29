@@ -18,12 +18,11 @@ func init() {
 	envVarRegex = regexp.MustCompile(regexp.QuoteMeta(envVarPrefix) + envVarPattern + regexp.QuoteMeta(envVarSuffix))
 }
 
-func replaceEnvVars(src string) string {
+func ReplaceEnvVars(src string) string {
 	replacer := func(match string) string {
 		varName := strings.TrimPrefix(match, envVarPrefix)
 		varName = strings.TrimSuffix(varName, envVarSuffix)
-		value, _ := os.LookupEnv(varName)
-		return value
+		return os.Getenv(varName)
 	}
 	return envVarRegex.ReplaceAllStringFunc(src, replacer)
 }

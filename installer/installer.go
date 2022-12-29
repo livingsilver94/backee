@@ -109,7 +109,7 @@ func (inst Installer) perform_link_installation(srv *service.Service) error {
 	}
 	for srcFile, param := range srv.Links {
 		srcPath := filepath.Join(linkdir, srcFile)
-		dstPath := replaceEnvVars(param.Path)
+		dstPath := ReplaceEnvVars(param.Path)
 		err := os.MkdirAll(filepath.Dir(dstPath), 0644)
 		if err != nil {
 			return err
