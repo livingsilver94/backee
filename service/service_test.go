@@ -2,6 +2,7 @@ package service_test
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/livingsilver94/backee/service"
@@ -11,6 +12,16 @@ const name = "testName"
 
 func TestParseEmptyDocument(t *testing.T) {
 	srv, err := service.NewFromYAML(name, []byte("# This is an empty document"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if srv.Name != name {
+		t.Fatalf("expected name %s. Found %s", name, srv.Name)
+	}
+}
+
+func TestParseEmptyDocumentReader(t *testing.T) {
+	srv, err := service.NewFromYAMLReader(name, strings.NewReader("# This is an empty document"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -122,6 +133,47 @@ links:
 	}
 }
 
+func TestParseVariables(t *testing.T) {
+	expect := map[string]service.VarValue{
+		"username":     {Kind: service.ClearText, Value: "value1"},
+		"password":     {Kind: service.Secret, Value: "dbKey"},
+		"implicitKind": {Kind: service.ClearText, Value: "value2"},
+	}
+	const doc = `
+variables:
+  username:
+    kind: cleartext
+    value: value1
+  password:
+    kind: secret
+    value: dbKey
+  implicitKind:
+    value: value2`
+	srv, err := service.NewFromYAML(name, []byte(doc))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(srv.Variables, expect) {
+		t.Fatalf("expected packages %v. Found %v", expect, srv.Variables)
+	}
+}
+
+func TestParseVariablesString(t *testing.T) {
+	expect := map[string]service.VarValue{
+		"username": {Kind: service.ClearText, Value: "value1"},
+	}
+	const doc = `
+variables:
+  username: value1`
+	srv, err := service.NewFromYAML(name, []byte(doc))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(srv.Variables, expect) {
+		t.Fatalf("expected packages %v. Found %v", expect, srv.Variables)
+	}
+}
+
 func TestParseFinalize(t *testing.T) {
 	const expect = "echo \"Test!\"\n# Another line."
 	const doc = `
@@ -137,5 +189,22 @@ finalize: |
 	}
 	if *srv.Finalize != expect {
 		t.Fatalf("expected finalize script %q. Found %q", expect, *srv.Finalize)
+	}
+}
+
+func TestServiceHash(t *testing.T) {
+	srv := service.Service{Name: "myName"}
+	expected := srv.Name
+	obtained := srv.Hash()
+	if obtained != expected {
+		t.Fatalf("expected %s. Got %s", expected, obtained)
+	}
+}
+
+func TestVarPlaceholder(t *testing.T) {
+	const expected = "%myVariableName%"
+	obtained := service.VarPlaceholder("myVariableName")
+	if obtained != expected {
+		t.Fatalf("expected %s. Got %s", expected, obtained)
 	}
 }

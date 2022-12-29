@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"io"
 	"strings"
 
@@ -22,20 +23,17 @@ type Service struct {
 func NewFromYAML(name string, yml []byte) (*Service, error) {
 	var srv Service
 	err := yaml.Unmarshal(yml, &srv)
-	if err != nil {
-		return nil, err
-	}
 	srv.Name = name
-	return &srv, nil
+	return &srv, err
 }
 
 func NewFromYAMLReader(name string, rd io.Reader) (*Service, error) {
 	var srv Service
 	err := yaml.NewDecoder(rd).Decode(&srv)
-	if err != nil {
-		return nil, err
-	}
 	srv.Name = name
+	if errors.Is(err, io.EOF) {
+		err = nil
+	}
 	return &srv, nil
 }
 
@@ -116,6 +114,9 @@ func (val *VarValue) UnmarshalYAML(data []byte) error {
 		type noRecursion VarValue
 		var noRec noRecursion
 		err := yaml.Unmarshal(data, &noRec)
+		if noRec.Kind == "" {
+			noRec.Kind = ClearText
+		}
 		*val = VarValue(noRec)
 		return err
 	}
