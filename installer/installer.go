@@ -1,8 +1,10 @@
 package installer
 
 import (
+	"io/fs"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/livingsilver94/backee/repo"
@@ -10,8 +12,8 @@ import (
 )
 
 type Repository interface {
-	DataDir() (string, error)
-	LinkDir() (string, error)
+	DataDir(string) (string, error)
+	LinkDir(string) (string, error)
 	ResolveDeps(srv *service.Service) (repo.DepGraph, error)
 }
 
@@ -98,6 +100,31 @@ func (Installer) perform_pkg_installation(srv *service.Service) error {
 }
 
 func (inst Installer) perform_link_installation(srv *service.Service) error {
+	if srv.Links == nil {
+		return nil
+	}
+	linkdir, err := inst.repository.LinkDir(srv.Name)
+	if err != nil {
+		return err
+	}
+	for srcFile, param := range srv.Links {
+		srcPath := filepath.Join(linkdir, srcFile)
+		dstPath := replaceEnvVars(param.Path)
+		err := os.MkdirAll(filepath.Dir(dstPath), 0644)
+		if err != nil {
+			return err
+		}
+		err = os.Symlink(srcPath, dstPath)
+		if err != nil {
+			return err
+		}
+		if param.Mode != 0 {
+			err := os.Chmod(dstPath, fs.FileMode(param.Mode))
+			if err != nil {
+				return err
+			}
+		}
+	}
 	return nil
 }
 
@@ -105,7 +132,13 @@ func (inst Installer) perform_finalizer(srv *service.Service) error {
 	if srv.Finalize == nil {
 		return nil
 	}
+	datadir, err := inst.repository.DataDir(srv.Name)
+	if err != nil {
+		return err
+	}
 	replacements := make([]string, 0, len(srv.Variables)*2+2)
+	replacements = append(replacements, service.VarPlaceholder(service.VariableDatadir))
+	replacements = append(replacements, datadir)
 	for key, val := range srv.Variables {
 		switch val.Kind {
 		case service.ClearText:
@@ -115,12 +148,6 @@ func (inst Installer) perform_finalizer(srv *service.Service) error {
 			// TODO
 		}
 	}
-	datadir, err := inst.repository.DataDir()
-	if err != nil {
-		return err
-	}
-	replacements = append(replacements, service.VarPlaceholder(service.VariableDatadir))
-	replacements = append(replacements, datadir)
 
 	script := strings.NewReplacer(replacements...).Replace(*srv.Finalize)
 	return runScript(script)
