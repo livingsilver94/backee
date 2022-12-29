@@ -83,12 +83,9 @@ packages:
 }
 
 func TestParseLinks(t *testing.T) {
-	expect := service.NewLinkMap()
-	for path, params := range map[string]service.LinkParams{
+	expect := map[string]service.LinkParams{
 		"/my/path/file1": {Path: "/tmp/alias1", Mode: 0o000},
 		"my/path/file2":  {Path: "/tmp/alias2", Mode: 0o755},
-	} {
-		expect.Set(path, params)
 	}
 	const doc = `
 links:
@@ -102,18 +99,15 @@ links:
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !srv.Links.Equal(expect) {
+	if !reflect.DeepEqual(srv.Links, expect) {
 		t.Fatalf("expected packages %v. Found %v", expect, srv.Links)
 	}
 }
 
 func TestParseLinksString(t *testing.T) {
-	expect := service.NewLinkMap()
-	for path, params := range map[string]service.LinkParams{
+	expect := map[string]service.LinkParams{
 		"/my/path/file1": {Path: "/tmp/alias1", Mode: 0644},
 		"my/path/file2":  {Path: "/tmp/alias2", Mode: 0o644},
-	} {
-		expect.Set(path, params)
 	}
 	const doc = `
 links:
@@ -123,7 +117,7 @@ links:
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !srv.Links.Equal(expect) {
+	if !reflect.DeepEqual(srv.Links, expect) {
 		t.Fatalf("expected packages %v. Found %v", expect, srv.Links)
 	}
 }

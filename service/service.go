@@ -4,20 +4,19 @@ import (
 	"io"
 	"strings"
 
-	"github.com/elliotchance/orderedmap/v2"
 	"github.com/goccy/go-yaml"
 	"github.com/hashicorp/go-set"
 )
 
 type Service struct {
-	Name       string              `yaml:"-"`
-	Depends    *DepSet             `yaml:"depends"`
-	Setup      *string             `yaml:"setup"`
-	PkgManager []string            `yaml:"pkgmanager"`
-	Packages   []string            `yaml:"packages"`
-	Links      *LinkMap            `yaml:"links"`
-	Variables  map[string]VarValue `yaml:"variables"`
-	Finalize   *string             `yaml:"finalize"`
+	Name       string                `yaml:"-"`
+	Depends    *DepSet               `yaml:"depends"`
+	Setup      *string               `yaml:"setup"`
+	PkgManager []string              `yaml:"pkgmanager"`
+	Packages   []string              `yaml:"packages"`
+	Links      map[string]LinkParams `yaml:"links"`
+	Variables  map[string]VarValue   `yaml:"variables"`
+	Finalize   *string               `yaml:"finalize"`
 }
 
 func NewFromYAML(name string, yml []byte) (*Service, error) {
@@ -67,43 +66,6 @@ func (ds *DepSet) UnmarshalYAML(data []byte) error {
 		return err
 	}
 	*ds = NewDepSetFrom(deps)
-	return nil
-}
-
-type LinkMap struct {
-	*orderedmap.OrderedMap[string, LinkParams]
-}
-
-func NewLinkMap() LinkMap {
-	return LinkMap{orderedmap.NewOrderedMap[string, LinkParams]()}
-}
-
-func (lm *LinkMap) Equal(lm2 LinkMap) bool {
-	if lm.Len() != lm2.Len() {
-		return false
-	}
-	el1 := lm.Front()
-	el2 := lm2.Front()
-	for el1 != nil {
-		if el1.Key != el2.Key || el1.Value != el2.Value {
-			return false
-		}
-		el1 = el1.Next()
-		el2 = el2.Next()
-	}
-	return true
-}
-
-func (lm *LinkMap) UnmarshalYAML(data []byte) error {
-	m := make(map[string]LinkParams)
-	err := yaml.Unmarshal(data, &m)
-	if err != nil {
-		return err
-	}
-	*lm = NewLinkMap()
-	for path, params := range m {
-		lm.Set(path, params)
-	}
 	return nil
 }
 
