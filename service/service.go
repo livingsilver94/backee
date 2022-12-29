@@ -161,3 +161,11 @@ func (val *VarValue) UnmarshalYAML(data []byte) error {
 	val.Value = value
 	return nil
 }
+
+const (
+	VariableDatadir = "datadir"
+)
+
+func VarPlaceholder(varname string) string {
+	return "%" + varname + "%"
+}
