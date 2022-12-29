@@ -7,6 +7,10 @@ OUTPATH := build/$(BINNAME)
 build:
 	$(GO) build -o $(OUTPATH) main.go
 
+.PHONY: check
+check:
+	$(GO) test ./...
+
 .PHONY: clean
 clean:
 	rm $(OUTPATH)
