@@ -1,26 +1,29 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 
 	"github.com/livingsilver94/backee/cli"
 	"github.com/livingsilver94/backee/installer"
 	"github.com/livingsilver94/backee/repo"
+	"github.com/livingsilver94/backee/service"
 )
 
 func run() error {
-	flags := cli.ParseFlags()
+	args := cli.ParseArguments()
 
 	cwd, err := os.Getwd()
 	if err != nil {
 		return err
 	}
-	rep := repo.NewFSRepoVariant(cwd, flags.Variant)
+	rep := repo.NewFSRepoVariant(cwd, args.Variant)
+	srv, err := services(rep, args.Services)
+	if err != nil {
+		return err
+	}
 	ins := installer.New(rep)
-	fmt.Println(ins)
-	return nil
+	return ins.Install(srv)
 }
 
 func main() {
@@ -28,4 +31,19 @@ func main() {
 	if err != nil {
 		log.Println(err)
 	}
+}
+
+func services(rep repo.FSRepo, names []string) ([]*service.Service, error) {
+	if len(names) == 0 {
+		return rep.AllServices()
+	}
+	services := make([]*service.Service, 0, len(names))
+	for _, name := range names {
+		srv, err := rep.Service(name)
+		if err != nil {
+			return nil, err
+		}
+		services = append(services, srv)
+	}
+	return services, nil
 }

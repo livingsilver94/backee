@@ -2,14 +2,16 @@ package cli
 
 import "flag"
 
-type Flags struct {
-	Variant string
+type Arguments struct {
+	Variant  string
+	Services []string
 }
 
-func ParseFlags() Flags {
-	var flags Flags
+func ParseArguments() Arguments {
+	var flags Arguments
 
 	flag.StringVar(&flags.Variant, "variant", "", "specify the system variant")
 	flag.Parse()
+	flags.Services = flag.Args()
 	return flags
 }
