@@ -38,7 +38,12 @@ func NewFSRepoVariant(baseDir, variant string) FSRepo {
 
 func (repo FSRepo) Service(name string) (*service.Service, error) {
 	dir := filepath.Join(repo.baseDir, name)
-	fname := filepath.Join(dir, name, fsRepoFilenamePrefix+fsRepoFilenameSuffix)
+	var fname string
+	if repo.variant != "" {
+		fname = filepath.Join(dir, name, fsRepoFilenamePrefix+"_"+repo.variant+fsRepoFilenameSuffix)
+	} else {
+		fname = filepath.Join(dir, name, fsRepoFilenamePrefix+fsRepoFilenameSuffix)
+	}
 	file, err := os.Open(fname)
 	if err != nil {
 		return nil, err
