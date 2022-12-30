@@ -1,0 +1,31 @@
+# This is a sample service definition for nginx.
+depends    :
+  # Suppose there is mysql/service.yaml.
+  # This will be installed before nginx.
+  - mysql
+setup      : |
+  # There is nothing to set up for nginx.
+  # As an example, let's just have a shell comment.
+  # Remember that code inside `setup` is shell code.
+pkgmanager : ["sudo", "dnf", "install", "-y"]
+packages   :
+  # These are OS packages, not services.
+  - nginx
+  - nginx-mod-mail
+vars       :
+  # Cleartext variable.
+  username: administrator
+  # Secret variable stored in a database.
+  password:
+    kind: secret
+    value: "/passwords/admin" # Path inside the secret database (e.g. Keepass).
+links      :
+  # This is the simple representation. File mode defaults to http.conf file mode.
+  http.conf: ${XDG_CONFIG_DIRS}/nginx/conf.d/http.conf
+  # The complete representation. It allows to pass a preferred file mode.
+  ssl.conf:
+    path: ${XDG_CONFIG_DIRS}/nginx/conf.d/ssl.conf
+    mode: 0o600
+install    : |
+  sed 's|DOMAIN|%mydomain%|' data/nginx.conf | sudo -u www-data tee /etc/nginx/nginx.conf > /dev/null
+  sudo systemctl enable --now nginx.service
