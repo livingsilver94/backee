@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/go-logr/logr"
 	"github.com/livingsilver94/backee/repo"
 	"github.com/livingsilver94/backee/service"
 )
@@ -23,12 +24,18 @@ const (
 
 type Installer struct {
 	repository Repository
+	logger     logr.Logger
 }
 
-func New(repository Repository) Installer {
-	return Installer{
+func New(repository Repository, options ...Option) Installer {
+	i := Installer{
 		repository: repository,
+		logger:     logr.Discard(),
 	}
+	for _, option := range options {
+		option(&i)
+	}
+	return i
 }
 
 func (inst Installer) Install(services []*service.Service) error {
@@ -66,14 +73,16 @@ func (inst Installer) install(srv *service.Service, ilist *installedList) error 
 	if ilist.contains(srv.Name) {
 		return nil
 	}
+	type performer func(logr.Logger, *service.Service) error
 	performers := []performer{
 		inst.perform_setup,
 		inst.perform_pkg_installation,
 		inst.perform_link_installation,
 		inst.perform_finalizer,
 	}
+	log := inst.logger.WithValues("package", srv.Name)
 	for _, perf := range performers {
-		err := perf(srv)
+		err := perf(log, srv)
 		if err != nil {
 			return err
 		}
@@ -82,27 +91,30 @@ func (inst Installer) install(srv *service.Service, ilist *installedList) error 
 	return nil
 }
 
-func (Installer) perform_setup(srv *service.Service) error {
+func (Installer) perform_setup(log logr.Logger, srv *service.Service) error {
 	if srv.Setup == nil {
 		return nil
 	}
+	log.Info("% Running setup script")
 	return runScript(*srv.Setup)
 }
 
-func (Installer) perform_pkg_installation(srv *service.Service) error {
+func (Installer) perform_pkg_installation(log logr.Logger, srv *service.Service) error {
 	if srv.Packages == nil {
 		return nil
 	}
+	log.Info("% Installing OS packages")
 	args := make([]string, 0, len(srv.PkgManager[1:])+len(srv.Packages))
 	args = append(args, srv.PkgManager[1:]...)
 	args = append(args, srv.Packages...)
 	return runProcess(srv.PkgManager[0], args...)
 }
 
-func (inst Installer) perform_link_installation(srv *service.Service) error {
+func (inst Installer) perform_link_installation(log logr.Logger, srv *service.Service) error {
 	if srv.Links == nil {
 		return nil
 	}
+	log.Info("% Installing symbolic links")
 	linkdir, err := inst.repository.LinkDir(srv.Name)
 	if err != nil {
 		return err
@@ -128,10 +140,11 @@ func (inst Installer) perform_link_installation(srv *service.Service) error {
 	return nil
 }
 
-func (inst Installer) perform_finalizer(srv *service.Service) error {
+func (inst Installer) perform_finalizer(log logr.Logger, srv *service.Service) error {
 	if srv.Finalize == nil {
 		return nil
 	}
+	log.Info("% Running finalizer script")
 	datadir, err := inst.repository.DataDir(srv.Name)
 	if err != nil {
 		return err
@@ -168,4 +181,10 @@ func runScript(script string) error {
 	)
 }
 
-type performer func(*service.Service) error
+type Option func(*Installer)
+
+func WithLogger(lg logr.Logger) Option {
+	return func(i *Installer) {
+		i.logger = lg
+	}
+}

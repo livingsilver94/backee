@@ -3,6 +3,7 @@ module github.com/livingsilver94/backee
 go 1.19
 
 require (
+	github.com/go-logr/logr v1.2.0
 	github.com/goccy/go-yaml v1.9.8
 	github.com/hashicorp/go-set v0.1.7
 )
