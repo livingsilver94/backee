@@ -23,7 +23,7 @@ func (dg *DepGraph) Insert(level int, srv *service.Service) {
 	if level > dg.Depth() {
 		panic(fmt.Sprintf("inserting dep on level %d but level %d does not exist", level, level-1))
 	}
-	if level == dg.Depth()-1 {
+	if level == dg.Depth() {
 		dg.graph = append(dg.graph, NewDepSet(depSetDefaultCap))
 	}
 	dg.Level(level).Insert(srv)
