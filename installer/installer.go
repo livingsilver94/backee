@@ -80,7 +80,7 @@ func (inst Installer) install(srv *service.Service, ilist *installedList) error 
 		inst.perform_link_installation,
 		inst.perform_finalizer,
 	}
-	log := inst.logger.WithValues("package", srv.Name)
+	log := inst.logger.WithName(srv.Name)
 	for _, perf := range performers {
 		err := perf(log, srv)
 		if err != nil {
