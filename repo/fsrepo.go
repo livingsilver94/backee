@@ -116,12 +116,14 @@ func (repo FSRepo) resolveDeps(graph *DepGraph, level int, deps *service.DepSet)
 	}
 
 	// Gather dependencies of dependencies.
-	level += 1
 	subdeps := service.NewDepSet(depSetDefaultCap)
 	for _, subdep := range graph.Level(level).List() {
+		if subdep.Depends == nil {
+			continue
+		}
 		subdeps.InsertAll(subdep.Depends.List())
 	}
-	return repo.resolveDeps(graph, level, &subdeps)
+	return repo.resolveDeps(graph, level+1, &subdeps)
 }
 
 // OSFS circumvents the inability to check whether fs.FS

@@ -37,10 +37,26 @@ func (dg *DepGraph) Level(index int) *DepSet {
 	return &dg.graph[index]
 }
 
+func (dg *DepGraph) Equal(dg2 DepGraph) bool {
+	if dg.Depth() != dg2.Depth() {
+		return false
+	}
+	for level := 0; level < dg.Depth(); level++ {
+		if !dg.Level(level).Equal(*dg2.Level(level)) {
+			return false
+		}
+	}
+	return true
+}
+
 type DepSet struct {
 	*set.HashSet[*service.Service, string]
 }
 
 func NewDepSet(capacity int) DepSet {
 	return DepSet{set.NewHashSet[*service.Service, string](capacity)}
+}
+
+func (ds DepSet) Equal(ds2 DepSet) bool {
+	return ds.HashSet.Equal(ds2.HashSet)
 }
