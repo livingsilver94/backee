@@ -18,33 +18,32 @@ const (
 )
 
 type FSRepo struct {
-	baseDir string
+	baseFS  fs.FS
 	variant string
 }
 
-func NewFSRepo(baseDir string) FSRepo {
+func NewFSRepo(baseFS fs.FS) FSRepo {
 	return FSRepo{
-		baseDir: baseDir,
+		baseFS:  baseFS,
 		variant: "",
 	}
 }
 
-func NewFSRepoVariant(baseDir, variant string) FSRepo {
+func NewFSRepoVariant(baseFS fs.FS, variant string) FSRepo {
 	return FSRepo{
-		baseDir: baseDir,
+		baseFS:  baseFS,
 		variant: variant,
 	}
 }
 
 func (repo FSRepo) Service(name string) (*service.Service, error) {
-	dir := filepath.Join(repo.baseDir, name)
 	var fname string
 	if repo.variant != "" {
-		fname = filepath.Join(dir, name, fsRepoFilenamePrefix+"_"+repo.variant+fsRepoFilenameSuffix)
+		fname = filepath.Join(name, fsRepoFilenamePrefix+"_"+repo.variant+fsRepoFilenameSuffix)
 	} else {
-		fname = filepath.Join(dir, name, fsRepoFilenamePrefix+fsRepoFilenameSuffix)
+		fname = filepath.Join(name, fsRepoFilenamePrefix+fsRepoFilenameSuffix)
 	}
-	file, err := os.Open(fname)
+	file, err := repo.baseFS.Open(fname)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +52,7 @@ func (repo FSRepo) Service(name string) (*service.Service, error) {
 }
 
 func (repo FSRepo) AllServices() ([]*service.Service, error) {
-	children, err := os.ReadDir(repo.baseDir)
+	children, err := fs.ReadDir(repo.baseFS, ".")
 	if err != nil {
 		return nil, err
 	}
@@ -85,13 +84,23 @@ func (repo FSRepo) ResolveDeps(srv *service.Service) (DepGraph, error) {
 }
 
 func (repo FSRepo) DataDir(name string) (string, error) {
-	dir := filepath.Join(repo.baseDir, name, fsRepoBaseDataDir)
-	return filepath.Abs(dir)
+	switch typ := repo.baseFS.(type) {
+	case OSFS:
+		dir := filepath.Join(typ.path, name, fsRepoBaseDataDir)
+		return filepath.Abs(dir)
+	default:
+		panic("unimplemented")
+	}
 }
 
 func (repo FSRepo) LinkDir(name string) (string, error) {
-	dir := filepath.Join(repo.baseDir, name, fsRepoBaseLinkDir)
-	return filepath.Abs(dir)
+	switch typ := repo.baseFS.(type) {
+	case OSFS:
+		dir := filepath.Join(typ.path, name, fsRepoBaseLinkDir)
+		return filepath.Abs(dir)
+	default:
+		panic("unimplemented")
+	}
 }
 
 func (repo FSRepo) resolveDeps(graph *DepGraph, level int, deps *service.DepSet) error {
@@ -113,4 +122,22 @@ func (repo FSRepo) resolveDeps(graph *DepGraph, level int, deps *service.DepSet)
 		subdeps.InsertAll(subdep.Depends.List())
 	}
 	return repo.resolveDeps(graph, level, &subdeps)
+}
+
+// OSFS circumvents the inability to check whether fs.FS
+// is a real operating system path. FSRepo will use OSFS
+// to discriminate a real OS path from a network, or a
+// testing, file system.
+//
+// Ideally, Go should provide the inverse operation of os.DirFS().
+type OSFS struct {
+	fs.StatFS
+	path string
+}
+
+func NewOSFS(path string) OSFS {
+	return OSFS{
+		StatFS: os.DirFS(path).(fs.StatFS),
+		path:   path,
+	}
 }

@@ -17,7 +17,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	rep := repo.NewFSRepoVariant(cwd, args.Variant)
+	rep := repo.NewFSRepoVariant(repo.NewOSFS(cwd), args.Variant)
 	srv, err := services(rep, args.Services)
 	if err != nil {
 		return err
