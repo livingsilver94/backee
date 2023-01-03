@@ -1,6 +1,7 @@
 package installer
 
 import (
+	"errors"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -128,7 +129,10 @@ func (inst Installer) perform_link_installation(log logr.Logger, srv *service.Se
 		}
 		err = os.Symlink(srcPath, dstPath)
 		if err != nil {
-			return err
+			if !errors.Is(err, fs.ErrExist) {
+				return err
+			}
+			log.Info("% already exists", dstPath)
 		}
 		if param.Mode != 0 {
 			err := os.Chmod(dstPath, fs.FileMode(param.Mode))
