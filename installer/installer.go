@@ -2,6 +2,7 @@ package installer
 
 import (
 	"errors"
+	"fmt"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -123,16 +124,24 @@ func (inst Installer) perform_link_installation(log logr.Logger, srv *service.Se
 	for srcFile, dstRawPath := range srv.Links {
 		srcPath := filepath.Join(linkdir, srcFile)
 		dstPath := ReplaceEnvVars(dstRawPath)
-		err := os.MkdirAll(filepath.Dir(dstPath), 0644)
-		if err != nil {
-			return err
-		}
-		err = os.Symlink(srcPath, dstPath)
-		if err != nil {
-			if !errors.Is(err, fs.ErrExist) {
+
+		dstDir := filepath.Dir(dstPath)
+		err := inst.runAsOwner(dstDir, func() error {
+			err := os.MkdirAll(dstDir, 0755)
+			if err != nil {
 				return err
 			}
-			log.Info("% already exists", dstPath)
+			err = os.Symlink(srcPath, dstPath)
+			if err != nil {
+				if !errors.Is(err, fs.ErrExist) {
+					return err
+				}
+				log.Info("% already exists", dstPath)
+			}
+			return nil
+		})
+		if err != nil {
+			return err
 		}
 	}
 	return nil
@@ -162,6 +171,23 @@ func (inst Installer) perform_finalizer(log logr.Logger, srv *service.Service) e
 
 	script := strings.NewReplacer(replacements...).Replace(*srv.Finalize)
 	return runScript(script)
+}
+
+func (inst Installer) runAsOwner(path string, f func() error) error {
+	for {
+		if len(path) == 1 {
+			return fmt.Errorf("parent directory of %s: %w", path, fs.ErrNotExist)
+		}
+		uid, gid, err := ID(path)
+		if err != nil {
+			if !errors.Is(err, fs.ErrNotExist) {
+				return err
+			}
+			path = filepath.Dir(path)
+			continue
+		}
+		return RunAs(f, uid, gid)
+	}
 }
 
 func runProcess(name string, arg ...string) error {
