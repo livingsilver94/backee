@@ -94,31 +94,9 @@ packages:
 }
 
 func TestParseLinks(t *testing.T) {
-	expect := map[string]service.LinkParams{
-		"/my/path/file1": {Path: "/tmp/alias1", Mode: 0o000},
-		"my/path/file2":  {Path: "/tmp/alias2", Mode: 0o755},
-	}
-	const doc = `
-links:
-  /my/path/file1:
-    path: /tmp/alias1
-    mode: 0o000
-  my/path/file2:
-    path: /tmp/alias2
-    mode: 0o755`
-	srv, err := service.NewFromYAML(name, []byte(doc))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !reflect.DeepEqual(srv.Links, expect) {
-		t.Fatalf("expected packages %v. Found %v", expect, srv.Links)
-	}
-}
-
-func TestParseLinksString(t *testing.T) {
-	expect := map[string]service.LinkParams{
-		"/my/path/file1": {Path: "/tmp/alias1", Mode: 0644},
-		"my/path/file2":  {Path: "/tmp/alias2", Mode: 0o644},
+	expect := map[string]string{
+		"/my/path/file1": "/tmp/alias1",
+		"my/path/file2":  "/tmp/alias2",
 	}
 	const doc = `
 links:
