@@ -10,14 +10,15 @@ import (
 )
 
 type Service struct {
-	Name       string                `yaml:"-"`
-	Depends    *DepSet               `yaml:"depends"`
-	Setup      *string               `yaml:"setup"`
-	PkgManager []string              `yaml:"pkgmanager"`
-	Packages   []string              `yaml:"packages"`
-	Links      map[string]LinkParams `yaml:"links"`
-	Variables  map[string]VarValue   `yaml:"variables"`
-	Finalize   *string               `yaml:"finalize"`
+	Name       string              `yaml:"-"`
+	Depends    *DepSet             `yaml:"depends"`
+	Setup      *string             `yaml:"setup"`
+	PkgManager []string            `yaml:"pkgmanager"`
+	Packages   []string            `yaml:"packages"`
+	Links      map[string]FilePath `yaml:"links"`
+	Variables  map[string]VarValue `yaml:"variables"`
+	Copies     map[string]FilePath `yaml:"copies"`
+	Finalize   *string             `yaml:"finalize"`
 }
 
 func NewFromYAML(name string, yml []byte) (*Service, error) {
@@ -67,12 +68,12 @@ func (ds *DepSet) UnmarshalYAML(data []byte) error {
 	return nil
 }
 
-type LinkParams struct {
+type FilePath struct {
 	Path string `yaml:"path"`
 	Mode uint16 `yaml:"mode"`
 }
 
-func (lp *LinkParams) UnmarshalYAML(data []byte) error {
+func (lp *FilePath) UnmarshalYAML(data []byte) error {
 	var path string
 	err := yaml.Unmarshal(data, &path)
 	if err != nil {
@@ -80,10 +81,10 @@ func (lp *LinkParams) UnmarshalYAML(data []byte) error {
 		if !strings.Contains(err.Error(), "of type") {
 			return err
 		}
-		type noRecursion LinkParams
+		type noRecursion FilePath
 		var noRec noRecursion
 		err := yaml.Unmarshal(data, &noRec)
-		*lp = LinkParams(noRec)
+		*lp = FilePath(noRec)
 		return err
 	}
 	lp.Path = path

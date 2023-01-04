@@ -94,7 +94,7 @@ packages:
 }
 
 func TestParseLinks(t *testing.T) {
-	expect := map[string]service.LinkParams{
+	expect := map[string]service.FilePath{
 		"/my/path/file1": {Path: "/tmp/alias1", Mode: 0o000},
 		"my/path/file2":  {Path: "/tmp/alias2", Mode: 0o755},
 	}
@@ -116,7 +116,7 @@ links:
 }
 
 func TestParseLinksString(t *testing.T) {
-	expect := map[string]service.LinkParams{
+	expect := map[string]service.FilePath{
 		"/my/path/file1": {Path: "/tmp/alias1", Mode: 0644},
 		"my/path/file2":  {Path: "/tmp/alias2", Mode: 0o644},
 	}
@@ -171,6 +171,46 @@ variables:
 	}
 	if !reflect.DeepEqual(srv.Variables, expect) {
 		t.Fatalf("expected packages %v. Found %v", expect, srv.Variables)
+	}
+}
+
+func TestParseCopies(t *testing.T) {
+	expect := map[string]service.FilePath{
+		"nginx.conf": {Path: "/etc/nginx/nginx.conf", Mode: 0o000},
+		"config":     {Path: "${HOME}/.ssh/config", Mode: 0o600},
+	}
+	const doc = `
+copies:
+  nginx.conf:
+    path: /etc/nginx/nginx.conf
+    mode: 0o000
+  config:
+    path: ${HOME}/.ssh/config
+    mode: 0o600`
+	srv, err := service.NewFromYAML(name, []byte(doc))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(srv.Copies, expect) {
+		t.Fatalf("expected packages %v. Found %v", expect, srv.Copies)
+	}
+}
+
+func TestParseCopiesString(t *testing.T) {
+	expect := map[string]service.FilePath{
+		"/my/path/file1": {Path: "/tmp/alias1", Mode: 0644},
+		"my/path/file2":  {Path: "/tmp/alias2", Mode: 0o644},
+	}
+	const doc = `
+copies:
+  /my/path/file1: /tmp/alias1
+  my/path/file2: /tmp/alias2`
+	srv, err := service.NewFromYAML(name, []byte(doc))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(srv.Copies, expect) {
+		t.Fatalf("expected packages %v. Found %v", expect, srv.Copies)
 	}
 }
 
