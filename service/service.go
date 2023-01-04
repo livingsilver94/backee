@@ -45,7 +45,7 @@ func NewFromYAMLReader(name string, rd io.Reader) (*Service, error) {
 	if errors.Is(err, io.EOF) {
 		err = nil
 	}
-	return &srv, nil
+	return &srv, err
 }
 
 func (srv *Service) Hash() string {
