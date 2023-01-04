@@ -32,3 +32,9 @@ jobs:
 
             - name: Run tests
               run: make check
+    update:
+        needs: test
+        runs-on: ubuntu-latest
+        steps:
+            - name: Update report card
+              uses: creekorful/goreportcard-action@v1.0

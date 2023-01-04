@@ -1,5 +1,7 @@
 # Backee
+[![Go Report Card](https://goreportcard.com/badge/github.com/livingsilver94/backee)](https://goreportcard.com/report/github.com/livingsilver94/backee)
 
+</br>
 Backee is configuration restorer for Unix computers. It reads a series of `service.yaml` files that contain operating system dependencies, dependencies among other services and POSIX shell scripts. Such sections are then used to restore services that a user wanted to backup. It also possible to restore files provided in the `data` directory. You can think it as a dotfiles manager, but more powerful and with the ability to restore system-wide configuration.
 
 Backee executes all child processes as the user executing Backee, so you may need to add privilege elevation commands where necessary such as `sudo`.
@@ -10,7 +12,7 @@ Services to be restored are represented by directories inside a parent directory
 
 Each service directory contains:
 
- - A `service.yaml` file, and/or multiple `service_variantName.yaml`. See more documentation below. 
+ - A `service.yaml` file, and/or multiple `service_variantName.yaml`. See more documentation below.
  - Optional `data` directory, containing files to process.
  - Optional `links` directory, containing files to be symlinked untouched.
 
