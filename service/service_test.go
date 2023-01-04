@@ -240,11 +240,3 @@ func TestServiceHash(t *testing.T) {
 		t.Fatalf("expected %s. Got %s", expected, obtained)
 	}
 }
-
-func TestVarPlaceholder(t *testing.T) {
-	const expected = "%myVariableName%"
-	obtained := service.VarPlaceholder("myVariableName")
-	if obtained != expected {
-		t.Fatalf("expected %s. Got %s", expected, obtained)
-	}
-}

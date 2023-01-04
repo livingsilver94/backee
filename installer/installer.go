@@ -137,12 +137,12 @@ func (inst Installer) perform_link_installation(log logr.Logger, srv *service.Se
 					return err
 				}
 				log.Info("% already exists", dstPath)
-		}
-		if param.Mode != 0 {
-			err := os.Chmod(dstPath, fs.FileMode(param.Mode))
-			if err != nil {
-				return err
 			}
+			if param.Mode != 0 {
+				err := os.Chmod(dstPath, fs.FileMode(param.Mode))
+				if err != nil {
+					return err
+				}
 			}
 			return nil
 		})
@@ -163,12 +163,12 @@ func (inst Installer) perform_finalizer(log logr.Logger, srv *service.Service) e
 		return err
 	}
 	replacements := make([]string, 0, len(srv.Variables)*2+2)
-	replacements = append(replacements, service.VarPlaceholder(service.VariableDatadir))
+	replacements = append(replacements, service.VarDelimiter+service.VarDatadir+service.VarDelimiter)
 	replacements = append(replacements, datadir)
 	for key, val := range srv.Variables {
 		switch val.Kind {
 		case service.ClearText:
-			replacements = append(replacements, service.VarPlaceholder(key))
+			replacements = append(replacements, service.VarDelimiter+key+service.VarDelimiter)
 			replacements = append(replacements, val.Value)
 		case service.Secret:
 			// TODO

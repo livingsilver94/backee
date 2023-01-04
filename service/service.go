@@ -9,6 +9,16 @@ import (
 	"github.com/hashicorp/go-set"
 )
 
+const (
+	// VarDelimiter delimits a variable name from a simple string.
+	// A variable has VarDelimiter before and after its name.
+	VarDelimiter = "%"
+
+	// VarDatadir is the variable name that idenfies a Service's
+	// data directory path.
+	VarDatadir = "datadir"
+)
+
 type Service struct {
 	Name       string              `yaml:"-"`
 	Depends    *DepSet             `yaml:"depends"`
@@ -124,12 +134,4 @@ func (val *VarValue) UnmarshalYAML(data []byte) error {
 	val.Kind = ClearText
 	val.Value = value
 	return nil
-}
-
-const (
-	VariableDatadir = "datadir"
-)
-
-func VarPlaceholder(varname string) string {
-	return "%" + varname + "%"
 }
