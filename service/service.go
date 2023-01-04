@@ -10,14 +10,14 @@ import (
 )
 
 type Service struct {
-	Name       string              `yaml:"-"`
-	Depends    *DepSet             `yaml:"depends"`
-	Setup      *string             `yaml:"setup"`
-	PkgManager []string            `yaml:"pkgmanager"`
-	Packages   []string            `yaml:"packages"`
-	Links      map[string]string   `yaml:"links"`
-	Variables  map[string]VarValue `yaml:"variables"`
-	Finalize   *string             `yaml:"finalize"`
+	Name       string                `yaml:"-"`
+	Depends    *DepSet               `yaml:"depends"`
+	Setup      *string               `yaml:"setup"`
+	PkgManager []string              `yaml:"pkgmanager"`
+	Packages   []string              `yaml:"packages"`
+	Links      map[string]LinkParams `yaml:"links"`
+	Variables  map[string]VarValue   `yaml:"variables"`
+	Finalize   *string               `yaml:"finalize"`
 }
 
 func NewFromYAML(name string, yml []byte) (*Service, error) {
@@ -64,6 +64,30 @@ func (ds *DepSet) UnmarshalYAML(data []byte) error {
 		return err
 	}
 	*ds = NewDepSetFrom(deps)
+	return nil
+}
+
+type LinkParams struct {
+	Path string `yaml:"path"`
+	Mode uint16 `yaml:"mode"`
+}
+
+func (lp *LinkParams) UnmarshalYAML(data []byte) error {
+	var path string
+	err := yaml.Unmarshal(data, &path)
+	if err != nil {
+		// FIXME: https://github.com/goccy/go-yaml/issues/338
+		if !strings.Contains(err.Error(), "of type") {
+			return err
+		}
+		type noRecursion LinkParams
+		var noRec noRecursion
+		err := yaml.Unmarshal(data, &noRec)
+		*lp = LinkParams(noRec)
+		return err
+	}
+	lp.Path = path
+	lp.Mode = 0644
 	return nil
 }
 

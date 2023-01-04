@@ -121,9 +121,9 @@ func (inst Installer) perform_link_installation(log logr.Logger, srv *service.Se
 	if err != nil {
 		return err
 	}
-	for srcFile, dstRawPath := range srv.Links {
+	for srcFile, param := range srv.Links {
 		srcPath := filepath.Join(linkdir, srcFile)
-		dstPath := ReplaceEnvVars(dstRawPath)
+		dstPath := ReplaceEnvVars(param.Path)
 
 		dstDir := filepath.Dir(dstPath)
 		err := inst.runAsOwner(dstDir, func() error {
@@ -137,6 +137,12 @@ func (inst Installer) perform_link_installation(log logr.Logger, srv *service.Se
 					return err
 				}
 				log.Info("% already exists", dstPath)
+		}
+		if param.Mode != 0 {
+			err := os.Chmod(dstPath, fs.FileMode(param.Mode))
+			if err != nil {
+				return err
+			}
 			}
 			return nil
 		})
