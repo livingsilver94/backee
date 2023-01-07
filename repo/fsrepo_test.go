@@ -2,6 +2,7 @@ package repo_test
 
 import (
 	"io/fs"
+	"path/filepath"
 	"reflect"
 	"testing"
 	"testing/fstest"
@@ -11,7 +12,7 @@ import (
 )
 
 func TestService(t *testing.T) {
-	fs := fstest.MapFS{"srv/service.yaml": &fstest.MapFile{}}
+	fs := fstest.MapFS{filepath.Join("srv", "service.yaml"): &fstest.MapFile{}}
 	rep := repo.NewFSRepo(fs)
 	expected := &service.Service{Name: "srv"}
 	obtained, err := rep.Service("srv")
@@ -25,10 +26,10 @@ func TestService(t *testing.T) {
 
 func TestAllServices(t *testing.T) {
 	fs := fstest.MapFS{
-		"srv1/service.yaml": &fstest.MapFile{},
-		"srv2/service.yaml": &fstest.MapFile{},
-		"emptydir":          &fstest.MapFile{Mode: fs.ModeDir},
-		"garbage.txt":       &fstest.MapFile{Data: []byte("please ignore"), Mode: 0644},
+		filepath.Join("srv1", "service.yaml"): &fstest.MapFile{},
+		filepath.Join("srv2", "service.yaml"): &fstest.MapFile{},
+		"emptydir":                            &fstest.MapFile{Mode: fs.ModeDir},
+		"garbage.txt":                         &fstest.MapFile{Data: []byte("please ignore"), Mode: 0644},
 	}
 	rep := repo.NewFSRepo(fs)
 	expected := []*service.Service{{Name: "srv1"}, {Name: "srv2"}}
@@ -43,10 +44,10 @@ func TestAllServices(t *testing.T) {
 
 func TestResolveDeps(t *testing.T) {
 	fs := fstest.MapFS{
-		"lvl1-1/service.yaml": &fstest.MapFile{Data: []byte(`depends: ["lvl2-1"]`)},
-		"lvl1-2/service.yaml": &fstest.MapFile{Data: []byte(`depends: ["lvl2-2"]`)},
-		"lvl2-1/service.yaml": &fstest.MapFile{},
-		"lvl2-2/service.yaml": &fstest.MapFile{},
+		filepath.Join("lvl1-1", "service.yaml"): &fstest.MapFile{Data: []byte(`depends: ["lvl2-1"]`)},
+		filepath.Join("lvl1-2", "service.yaml"): &fstest.MapFile{Data: []byte(`depends: ["lvl2-2"]`)},
+		filepath.Join("lvl2-1", "service.yaml"): &fstest.MapFile{},
+		filepath.Join("lvl2-2", "service.yaml"): &fstest.MapFile{},
 	}
 	deps := service.NewDepSet(2)
 	for _, name := range []string{"lvl1-1", "lvl1-2"} {
