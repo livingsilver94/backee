@@ -2,11 +2,11 @@
 
 package installer
 
-func IDFS(sys fs.FS, path string) (int, int, error) {
+func UnixIDsFS(sys fs.FS, path string) (uid int, gid int, err error) {
 	return -1, -1, nil
 }
 
-func ID(path string) (int, int, error) {
+func UnixIDs(path string) (uid int, gid int, err error) {
 	return IDFS(os.DirFS(path), ".")
 }
 

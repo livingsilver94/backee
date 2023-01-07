@@ -42,12 +42,12 @@ func New(repository Repository, options ...Option) Installer {
 
 func (inst Installer) Install(services []*service.Service) error {
 	ilistFile, err := os.OpenFile(installedListFilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
-	var list installedList
+	var list List
 	if err != nil {
-		list = newInstalledList(newDiscard())
+		list = NewList(nil)
 	} else {
 		defer ilistFile.Close()
-		list = newInstalledList(ilistFile)
+		list = NewList(ilistFile)
 	}
 
 	for _, srv := range services {
@@ -71,8 +71,8 @@ func (inst Installer) Install(services []*service.Service) error {
 	return nil
 }
 
-func (inst Installer) install(srv *service.Service, ilist *installedList) error {
-	if ilist.contains(srv.Name) {
+func (inst Installer) install(srv *service.Service, ilist *List) error {
+	if ilist.Contains(srv.Name) {
 		return nil
 	}
 	type performer func(logr.Logger, *service.Service) error
@@ -89,7 +89,7 @@ func (inst Installer) install(srv *service.Service, ilist *installedList) error 
 			return err
 		}
 	}
-	ilist.insert(srv.Name)
+	ilist.Insert(srv.Name)
 	return nil
 }
 
@@ -184,7 +184,7 @@ func (inst Installer) runAsOwner(path string, f func() error) error {
 		if len(path) == 1 {
 			return fmt.Errorf("parent directory of %s: %w", path, fs.ErrNotExist)
 		}
-		uid, gid, err := ID(path)
+		uid, gid, err := UnixIDs(path)
 		if err != nil {
 			if !errors.Is(err, fs.ErrNotExist) {
 				return err

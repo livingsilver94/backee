@@ -10,14 +10,14 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-func TestIDFS(t *testing.T) {
+func TestUnixIDsFS(t *testing.T) {
 	const expUID = 123
 	const expGID = 456
 	fs := fstest.MapFS{
 		"file.txt": &fstest.MapFile{Sys: unix.Stat_t{Uid: expUID, Gid: expGID}},
 	}
 
-	uid, gid, err := installer.IDFS(fs, "file.txt")
+	uid, gid, err := installer.UnixIDsFS(fs, "file.txt")
 	if err != nil {
 		t.Fatal(err)
 	}

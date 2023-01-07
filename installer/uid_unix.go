@@ -9,7 +9,7 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-func IDFS(sys fs.FS, path string) (int, int, error) {
+func UnixIDsFS(sys fs.FS, path string) (uid int, gid int, err error) {
 	info, err := fs.Stat(sys, path)
 	if err != nil {
 		return -1, -1, err
@@ -18,8 +18,8 @@ func IDFS(sys fs.FS, path string) (int, int, error) {
 	return int(stat.Uid), int(stat.Gid), nil
 }
 
-func ID(path string) (int, int, error) {
-	return IDFS(os.DirFS(path), ".")
+func UnixIDs(path string) (uid int, gid int, err error) {
+	return UnixIDsFS(os.DirFS(path), ".")
 }
 
 func RunAs(f func() error, uid, gid int) error {
