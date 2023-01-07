@@ -9,7 +9,7 @@ import (
 )
 
 type List struct {
-	dest      *bufio.Writer
+	dest      io.Writer
 	installed *set.Set[string]
 }
 
@@ -23,18 +23,22 @@ func NewList(dest io.ReadWriter) List {
 		installed.Insert(scan.Text())
 	}
 	return List{
-		dest:      bufio.NewWriter(dest),
+		dest:      dest,
 		installed: installed,
 	}
 }
 
 func (il *List) Insert(name string) {
-	fmt.Fprintln(il.dest, name)
+	fmt.Fprintf(il.dest, "\n"+name)
 	il.installed.Insert(name)
 }
 
 func (il *List) Contains(name string) bool {
 	return il.installed.Contains(name)
+}
+
+func (il *List) Size() int {
+	return il.installed.Size()
 }
 
 type discard struct {
