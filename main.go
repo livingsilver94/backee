@@ -1,8 +1,6 @@
 package main
 
 import (
-	"log"
-
 	"github.com/livingsilver94/backee/cli"
 	"github.com/livingsilver94/backee/installer"
 	"github.com/livingsilver94/backee/repo"
@@ -33,7 +31,7 @@ func run() error {
 func main() {
 	err := run()
 	if err != nil {
-		log.Println(err)
+		cli.Logger().Error(err, "")
 	}
 }
 
