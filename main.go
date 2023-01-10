@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"os"
 
 	"github.com/livingsilver94/backee/cli"
 	"github.com/livingsilver94/backee/installer"
@@ -11,13 +10,12 @@ import (
 )
 
 func run() error {
-	args := cli.ParseArguments()
-
-	cwd, err := os.Getwd()
+	args, err := cli.ParseArguments()
 	if err != nil {
 		return err
 	}
-	rep := repo.NewFSRepoVariant(repo.NewOSFS(cwd), args.Variant)
+
+	rep := repo.NewFSRepoVariant(repo.NewOSFS(args.Directory), args.Variant)
 	srv, err := services(rep, args.Services)
 	if err != nil {
 		return err
@@ -29,7 +27,6 @@ func run() error {
 	} else {
 		ins = installer.New(rep, installer.WithLogger(cli.Logger()))
 	}
-
 	return ins.Install(srv)
 }
 

@@ -1,18 +1,28 @@
 package cli
 
 import (
+	"os"
+
 	"github.com/alecthomas/kong"
 )
 
 type Arguments struct {
-	Quiet   bool   `short:"q" help:"Do not print anything on the terminal."`
-	Variant string `help:"Specify the system variant."`
+	Directory string `short:"C" type:"existingdir" help:"Change the base directory."`
+	Quiet     bool   `short:"q" help:"Do not print anything on the terminal."`
+	Variant   string `help:"Specify the system variant."`
 
 	Services []string `arg:"" type:"existingdir" help:"Services to install."`
 }
 
-func ParseArguments() Arguments {
+func ParseArguments() (Arguments, error) {
 	var args Arguments
 	kong.Parse(&args)
-	return args
+	if args.Directory == "" {
+		cwd, err := os.Getwd()
+		if err != nil {
+			return args, err
+		}
+		args.Directory = cwd
+	}
+	return args, nil
 }
