@@ -17,12 +17,12 @@ func TestUnixIDsFS(t *testing.T) {
 		"file.txt": &fstest.MapFile{Sys: unix.Stat_t{Uid: expUID, Gid: expGID}},
 	}
 
-	uid, gid, err := installer.UnixIDsFS(fs, "file.txt")
+	id, err := installer.PathOwnerFS(fs, "file.txt")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if uid != expUID || gid != expGID {
-		t.Fatalf("expected UID %d and GID %d. Got %d and %d", expUID, expGID, uid, gid)
+	if id.UID != expUID || id.GID != expGID {
+		t.Fatalf("expected UID %d and GID %d. Got %d and %d", expUID, expGID, id.UID, id.GID)
 	}
 }
 
@@ -30,7 +30,7 @@ func TestRunAs(t *testing.T) {
 	f := func() error { return nil }
 	uid := unix.Getuid()
 	gid := unix.Getgid()
-	err := installer.RunAs(f, uid, gid)
+	err := installer.RunAsUnixID(f, installer.UnixID{UID: uint32(uid), GID: uint32(gid)})
 	if err != nil {
 		t.Fatal(err)
 	}

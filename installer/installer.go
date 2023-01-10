@@ -1,13 +1,7 @@
 package installer
 
 import (
-	"errors"
-	"fmt"
-	"io/fs"
 	"os"
-	"os/exec"
-	"path/filepath"
-	"strings"
 
 	"github.com/go-logr/logr"
 	"github.com/livingsilver94/backee/repo"
@@ -15,8 +9,8 @@ import (
 )
 
 type Repository interface {
-	DataDir(string) (string, error)
-	LinkDir(string) (string, error)
+	DataDir(srvName string) (string, error)
+	LinkDir(srvName string) (string, error)
 	ResolveDeps(srv *service.Service) (repo.DepGraph, error)
 }
 
@@ -26,12 +20,14 @@ const (
 
 type Installer struct {
 	repository Repository
+	varcache   VarCache
 	logger     logr.Logger
 }
 
 func New(repository Repository, options ...Option) Installer {
 	i := Installer{
 		repository: repository,
+		varcache:   NewVarCache(),
 		logger:     logr.Discard(),
 	}
 	for _, option := range options {
@@ -75,12 +71,12 @@ func (inst Installer) install(srv *service.Service, ilist *List) error {
 	if ilist.Contains(srv.Name) {
 		return nil
 	}
-	type performer func(logr.Logger, *service.Service) error
-	performers := []performer{
-		inst.perform_setup,
-		inst.perform_pkg_installation,
-		inst.perform_link_installation,
-		inst.perform_finalizer,
+	performers := []Performer{
+		Setup,
+		PackageInstaller,
+		SymlinkPerformer(inst.repository),
+		CopyPerformer(inst.repository),
+		Finalizer(inst.repository, inst.varcache),
 	}
 	log := inst.logger.WithName(srv.Name)
 	for _, perf := range performers {
@@ -91,124 +87,6 @@ func (inst Installer) install(srv *service.Service, ilist *List) error {
 	}
 	ilist.Insert(srv.Name)
 	return nil
-}
-
-func (Installer) perform_setup(log logr.Logger, srv *service.Service) error {
-	if srv.Setup == nil {
-		return nil
-	}
-	log.Info("% Running setup script")
-	return runScript(*srv.Setup)
-}
-
-func (Installer) perform_pkg_installation(log logr.Logger, srv *service.Service) error {
-	if srv.Packages == nil {
-		return nil
-	}
-	log.Info("% Installing OS packages")
-	args := make([]string, 0, len(srv.PkgManager[1:])+len(srv.Packages))
-	args = append(args, srv.PkgManager[1:]...)
-	args = append(args, srv.Packages...)
-	return runProcess(srv.PkgManager[0], args...)
-}
-
-func (inst Installer) perform_link_installation(log logr.Logger, srv *service.Service) error {
-	if srv.Links == nil {
-		return nil
-	}
-	log.Info("% Installing symbolic links")
-	linkdir, err := inst.repository.LinkDir(srv.Name)
-	if err != nil {
-		return err
-	}
-	for srcFile, param := range srv.Links {
-		srcPath := filepath.Join(linkdir, srcFile)
-		dstPath := ReplaceEnvVars(param.Path)
-
-		dstDir := filepath.Dir(dstPath)
-		err := inst.runAsOwner(dstDir, func() error {
-			err := os.MkdirAll(dstDir, 0755)
-			if err != nil {
-				return err
-			}
-			err = os.Symlink(srcPath, dstPath)
-			if err != nil {
-				if !errors.Is(err, fs.ErrExist) {
-					return err
-				}
-				log.Info("% already exists", dstPath)
-			}
-			if param.Mode != 0 {
-				err := os.Chmod(dstPath, fs.FileMode(param.Mode))
-				if err != nil {
-					return err
-				}
-			}
-			return nil
-		})
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (inst Installer) perform_finalizer(log logr.Logger, srv *service.Service) error {
-	if srv.Finalize == nil {
-		return nil
-	}
-	log.Info("% Running finalizer script")
-	datadir, err := inst.repository.DataDir(srv.Name)
-	if err != nil {
-		return err
-	}
-	replacements := make([]string, 0, len(srv.Variables)*2+2)
-	replacements = append(replacements, service.VarDelimiter+service.VarDatadir+service.VarDelimiter)
-	replacements = append(replacements, datadir)
-	for key, val := range srv.Variables {
-		switch val.Kind {
-		case service.ClearText:
-			replacements = append(replacements, service.VarDelimiter+key+service.VarDelimiter)
-			replacements = append(replacements, val.Value)
-		case service.Secret:
-			// TODO
-		}
-	}
-
-	script := strings.NewReplacer(replacements...).Replace(*srv.Finalize)
-	return runScript(script)
-}
-
-func (inst Installer) runAsOwner(path string, f func() error) error {
-	for {
-		if len(path) == 1 {
-			return fmt.Errorf("parent directory of %s: %w", path, fs.ErrNotExist)
-		}
-		uid, gid, err := UnixIDs(path)
-		if err != nil {
-			if !errors.Is(err, fs.ErrNotExist) {
-				return err
-			}
-			path = filepath.Dir(path)
-			continue
-		}
-		return RunAs(f, uid, gid)
-	}
-}
-
-func runProcess(name string, arg ...string) error {
-	cmd := exec.Command(name, arg...)
-	cmd.Stdout = nil
-	return cmd.Run()
-}
-
-func runScript(script string) error {
-	return runProcess(
-		"sh",
-		"-e", // Stop script on first error.
-		"-c", // Run the following script string.
-		script,
-	)
 }
 
 type Option func(*Installer)
