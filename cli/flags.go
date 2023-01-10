@@ -1,20 +1,18 @@
 package cli
 
-import "flag"
+import (
+	"github.com/alecthomas/kong"
+)
 
 type Arguments struct {
-	Quiet   bool
-	Variant string
+	Quiet   bool   `short:"q" help:"Do not print anything on the terminal."`
+	Variant string `help:"Specify the system variant."`
 
-	Services []string
+	Services []string `arg:"" type:"existingdir" help:"Services to install."`
 }
 
 func ParseArguments() Arguments {
-	var flags Arguments
-
-	flag.BoolVar(&flags.Quiet, "q", false, "make logging quiet")
-	flag.StringVar(&flags.Variant, "variant", "", "specify the system variant")
-	flag.Parse()
-	flags.Services = flag.Args()
-	return flags
+	var args Arguments
+	kong.Parse(&args)
+	return args
 }
