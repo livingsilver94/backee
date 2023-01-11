@@ -23,7 +23,7 @@ func run() error {
 	if args.Quiet {
 		ins = installer.New(rep)
 	} else {
-		ins = installer.New(rep, installer.WithLogger(cli.Logger()))
+		ins = installer.New(rep, installer.WithLogger(cli.Logger))
 	}
 	return ins.Install(srv)
 }
@@ -31,7 +31,7 @@ func run() error {
 func main() {
 	err := run()
 	if err != nil {
-		cli.Logger().Error(err, "")
+		cli.Logger.Error(err, "")
 	}
 }
 
