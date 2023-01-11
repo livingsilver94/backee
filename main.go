@@ -4,6 +4,7 @@ import (
 	"github.com/livingsilver94/backee/cli"
 	"github.com/livingsilver94/backee/installer"
 	"github.com/livingsilver94/backee/repo"
+	"github.com/livingsilver94/backee/secret"
 	"github.com/livingsilver94/backee/service"
 )
 
@@ -19,12 +20,15 @@ func run() error {
 		return err
 	}
 
-	var ins installer.Installer
-	if args.Quiet {
-		ins = installer.New(rep)
-	} else {
-		ins = installer.New(rep, installer.WithLogger(cli.Logger))
+	opts := make([]installer.Option, 0, 2)
+	if !args.Quiet {
+		opts = append(opts, installer.WithLogger(cli.Logger))
 	}
+	if args.KeepassXC.Path != "" {
+		store := secret.NewKeepassXC(args.KeepassXC.Path, args.KeepassXC.Password)
+		opts = append(opts, installer.WithStore("keepassxc", store))
+	}
+	ins := installer.New(rep, opts...)
 	return ins.Install(srv)
 }
 

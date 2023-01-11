@@ -100,3 +100,9 @@ func WithLogger(lg logr.Logger) Option {
 		i.logger = lg
 	}
 }
+
+func WithStore(kind service.VarKind, store VarStore) Option {
+	return func(i *Installer) {
+		i.varcache.SetStore(kind, store)
+	}
+}
