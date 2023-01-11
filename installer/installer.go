@@ -14,6 +14,10 @@ type Repository interface {
 	ResolveDeps(srv *service.Service) (repo.DepGraph, error)
 }
 
+type VarStore interface {
+	Value(storeValue string) (varValue string, err error)
+}
+
 const (
 	installedListFilename = "installed.txt"
 )

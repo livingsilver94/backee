@@ -7,18 +7,32 @@ import (
 	"github.com/livingsilver94/backee/service"
 )
 
-func TestNew(t *testing.T) {
-	cache := installer.NewVarCache()
-	if cache == nil {
-		t.Fatal("returned value is nil")
-	}
-}
-
 func TestInsertClear(t *testing.T) {
 	cache := installer.NewVarCache()
 	cache.Insert("service1", "key", service.VarValue{Kind: service.ClearText, Value: "value"})
-	if len(cache) != 1 {
-		t.Fatalf("expected length %d. Got %d", 1, len(cache))
+	if cache.Length() != 1 {
+		t.Fatalf("expected length %d. Got %d", 1, cache.Length())
+	}
+}
+
+type testVarStore struct{}
+
+func (testVarStore) Value(key string) (value string, err error) {
+	return "testy" + key, nil
+}
+
+func TestInsertStore(t *testing.T) {
+	const kind service.VarKind = "testKind"
+
+	cache := installer.NewVarCache()
+	cache.SetStore(kind, testVarStore{})
+	err := cache.Insert("service1", "key", service.VarValue{Kind: kind, Value: "storeValue"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	v, _ := cache.Get("service1", "key")
+	if v != "testystoreValue" {
+		t.Fatalf("expected value %q. Got %q", "testystoreValue", v)
 	}
 }
 
