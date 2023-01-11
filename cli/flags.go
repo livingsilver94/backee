@@ -7,8 +7,8 @@ import (
 )
 
 type KeepassXC struct {
-	Path     string `env:"KEEPASSXC_PATH" help:"KeepassXC database path"`
-	Password string `env:"KEEPASSXC_PASSWORD" help:"KeepassXC database password"`
+	Path     string `env:"KEEPASSXC_PATH" help:"KeepassXC database path."`
+	Password string `env:"KEEPASSXC_PASSWORD" help:"KeepassXC database password."`
 }
 
 type Arguments struct {
