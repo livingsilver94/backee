@@ -194,6 +194,7 @@ func ReplaceEnvVars(src string) string {
 func runProcess(name string, arg ...string) error {
 	cmd := exec.Command(name, arg...)
 	cmd.Stdout = nil
+	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
 
