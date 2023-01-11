@@ -3,10 +3,9 @@ package service
 import (
 	"errors"
 	"io"
-	"strings"
 
-	"github.com/goccy/go-yaml"
 	"github.com/hashicorp/go-set"
+	"gopkg.in/yaml.v3"
 )
 
 const (
@@ -68,9 +67,9 @@ func (ds DepSet) Equal(ds2 DepSet) bool {
 	return ds.Set.Equal(ds2.Set)
 }
 
-func (ds *DepSet) UnmarshalYAML(data []byte) error {
+func (ds *DepSet) UnmarshalYAML(node *yaml.Node) error {
 	var deps []string
-	err := yaml.Unmarshal(data, &deps)
+	err := node.Decode(&deps)
 	if err != nil {
 		return err
 	}
@@ -83,22 +82,25 @@ type FilePath struct {
 	Mode uint16 `yaml:"mode"`
 }
 
-func (lp *FilePath) UnmarshalYAML(data []byte) error {
-	var path string
-	err := yaml.Unmarshal(data, &path)
-	if err != nil {
-		// FIXME: https://github.com/goccy/go-yaml/issues/338
-		if !strings.Contains(err.Error(), "of type") {
+func (lp *FilePath) UnmarshalYAML(node *yaml.Node) error {
+	switch node.Kind {
+	case yaml.ScalarNode:
+		var path string
+		err := node.Decode(&path)
+		if err != nil {
 			return err
 		}
+		lp.Path = path
+		lp.Mode = 0644
+	default:
 		type noRecursion FilePath
 		var noRec noRecursion
-		err := yaml.Unmarshal(data, &noRec)
+		err := node.Decode(&noRec)
+		if err != nil {
+			return err
+		}
 		*lp = FilePath(noRec)
-		return err
 	}
-	lp.Path = path
-	lp.Mode = 0644
 	return nil
 }
 
@@ -113,24 +115,27 @@ type VarValue struct {
 	Value string  `yaml:"value"`
 }
 
-func (val *VarValue) UnmarshalYAML(data []byte) error {
-	var value string
-	err := yaml.Unmarshal(data, &value)
-	if err != nil {
-		// FIXME: https://github.com/goccy/go-yaml/issues/338
-		if !strings.Contains(err.Error(), "of type") {
+func (val *VarValue) UnmarshalYAML(node *yaml.Node) error {
+	switch node.Kind {
+	case yaml.ScalarNode:
+		var value string
+		err := node.Decode(&value)
+		if err != nil {
 			return err
 		}
+		val.Kind = ClearText
+		val.Value = value
+	default:
 		type noRecursion VarValue
 		var noRec noRecursion
-		err := yaml.Unmarshal(data, &noRec)
+		err := node.Decode(&noRec)
+		if err != nil {
+			return err
+		}
 		if noRec.Kind == "" {
 			noRec.Kind = ClearText
 		}
 		*val = VarValue(noRec)
-		return err
 	}
-	val.Kind = ClearText
-	val.Value = value
 	return nil
 }

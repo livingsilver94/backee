@@ -5,14 +5,7 @@ go 1.19
 require (
 	github.com/alecthomas/kong v0.7.1
 	github.com/go-logr/logr v1.2.3
-	github.com/goccy/go-yaml v1.9.8
 	github.com/hashicorp/go-set v0.1.7
 	golang.org/x/sys v0.4.0
-)
-
-require (
-	github.com/fatih/color v1.13.0 // indirect
-	github.com/mattn/go-colorable v0.1.13 // indirect
-	github.com/mattn/go-isatty v0.0.16 // indirect
-	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
+	gopkg.in/yaml.v3 v3.0.1
 )
