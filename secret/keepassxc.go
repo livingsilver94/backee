@@ -1,6 +1,7 @@
 package secret
 
 import (
+	"bytes"
 	"io"
 	"os/exec"
 )
@@ -18,7 +19,7 @@ func NewKeepassXC(dbPath, password string) KeepassXC {
 }
 
 func (k KeepassXC) Value(key string) (string, error) {
-	cmd := exec.Command("keepassxc-cli", "show", "-sa", "password", k.dbPath, key)
+	cmd := exec.Command("keepassxc-cli", "show", "-q", "-sa", "password", k.dbPath, key)
 
 	in, err := cmd.StdinPipe()
 	if err != nil {
@@ -30,5 +31,5 @@ func (k KeepassXC) Value(key string) (string, error) {
 	}()
 
 	value, err := cmd.Output()
-	return string(value), err
+	return string(bytes.TrimSuffix(value, []byte{'\n'})), err
 }
