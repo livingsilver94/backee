@@ -17,7 +17,7 @@ func (c VarCache) Insert(srv, key string, value service.VarValue) {
 	switch value.Kind {
 	case service.ClearText:
 		vars[key] = value.Value
-	case service.Secret:
+	default:
 		// TODO
 	}
 }

@@ -136,7 +136,7 @@ links:
 func TestParseVariables(t *testing.T) {
 	expect := map[string]service.VarValue{
 		"username":     {Kind: service.ClearText, Value: "value1"},
-		"password":     {Kind: service.Secret, Value: "dbKey"},
+		"password":     {Kind: service.VarKind("keepassxc"), Value: "dbKey"},
 		"implicitKind": {Kind: service.ClearText, Value: "value2"},
 	}
 	const doc = `
@@ -145,7 +145,7 @@ variables:
     kind: cleartext
     value: value1
   password:
-    kind: secret
+    kind: keepassxc
     value: dbKey
   implicitKind:
     value: value2`

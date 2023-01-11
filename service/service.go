@@ -106,7 +106,6 @@ type VarKind string
 
 const (
 	ClearText VarKind = "cleartext"
-	Secret    VarKind = "secret"
 )
 
 type VarValue struct {
