@@ -15,6 +15,18 @@ func TestInsertClear(t *testing.T) {
 	}
 }
 
+func TestInsertTwice(t *testing.T) {
+	cache := installer.NewVarCache()
+	cache.Insert("service1", "key", service.VarValue{Kind: service.ClearText, Value: "value"})
+	cache.Insert("service1", "key", service.VarValue{Kind: service.ClearText, Value: "boo!"})
+	if cache.Length() != 1 {
+		t.Fatalf("expected length %d. Got %d", 1, cache.Length())
+	}
+	if val, _ := cache.Get("service1", "key"); val != "value" {
+		t.Fatalf("expected value  %q. Got %q", "value", val)
+	}
+}
+
 type testVarStore struct{}
 
 func (testVarStore) Value(key string) (value string, err error) {
