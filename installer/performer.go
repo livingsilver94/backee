@@ -23,7 +23,7 @@ var (
 		if srv.Setup == nil || *srv.Setup == "" {
 			return nil
 		}
-		log.Info("% Running setup script")
+		log.Info("Running setup script")
 		return runScript(*srv.Setup)
 	}
 
@@ -31,7 +31,7 @@ var (
 		if len(srv.Packages) == 0 {
 			return nil
 		}
-		log.Info("% Installing OS packages")
+		log.Info("Installing OS packages")
 		args := make([]string, 0, len(srv.PkgManager[1:])+len(srv.Packages))
 		args = append(args, srv.PkgManager[1:]...)
 		args = append(args, srv.Packages...)
@@ -44,7 +44,7 @@ func SymlinkPerformer(repo Repository) Performer {
 		if len(srv.Links) == 0 {
 			return nil
 		}
-		log.Info("% Symlinking files")
+		log.Info("Symlinking files")
 		linkDir, err := repo.LinkDir(srv.Name)
 		if err != nil {
 			return err
@@ -59,7 +59,7 @@ func CopyPerformer(repo Repository) Performer {
 		if len(srv.Copies) == 0 {
 			return nil
 		}
-		log.Info("% Copying files")
+		log.Info("Copying files")
 		linkDir, err := repo.DataDir(srv.Name)
 		if err != nil {
 			return err
@@ -74,7 +74,7 @@ func Finalizer(repo Repository, vars VarCache) Performer {
 		if srv.Finalize == nil || *srv.Finalize == "" {
 			return nil
 		}
-		log.Info("% Running finalizer script")
+		log.Info("Running finalizer script")
 		if _, ok := vars.Get(srv.Name, service.VarDatadir); !ok {
 			datadir, err := repo.DataDir(srv.Name)
 			if err != nil {
@@ -143,7 +143,7 @@ func (w symlinkWriter) writeFile(dstPath, srcPath string) error {
 		if !errors.Is(err, fs.ErrExist) {
 			return err
 		}
-		w.log.Info("% already exists", dstPath)
+		w.log.Info("already exists", dstPath)
 	}
 	return nil
 }

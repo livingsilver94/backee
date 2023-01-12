@@ -72,7 +72,9 @@ func (inst Installer) Install(services []*service.Service) error {
 }
 
 func (inst Installer) install(srv *service.Service, ilist *List) error {
+	log := inst.logger.WithName(srv.Name)
 	if ilist.Contains(srv.Name) {
+		log.Info("Already installed")
 		return nil
 	}
 	performers := []Performer{
@@ -82,7 +84,6 @@ func (inst Installer) install(srv *service.Service, ilist *List) error {
 		CopyPerformer(inst.repository),
 		Finalizer(inst.repository, inst.varcache),
 	}
-	log := inst.logger.WithName(srv.Name)
 	for _, perf := range performers {
 		err := perf(log, srv)
 		if err != nil {
