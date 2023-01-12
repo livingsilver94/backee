@@ -42,6 +42,16 @@ func (c VarCache) Insert(srv, key string, value service.VarValue) error {
 	return nil
 }
 
+func (c VarCache) InsertMany(srv string, values map[string]service.VarValue) error {
+	for key, value := range values {
+		err := c.Insert(srv, key, value)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (c VarCache) Get(service, key string) (string, bool) {
 	vars, ok := c.vars[service]
 	if !ok {
