@@ -1,44 +1,36 @@
 name: test
 on:
-    push:
-        branches: ["main"]
-    pull_request:
+  push:
+    branches: ["main"]
+  pull_request:
 
 jobs:
-    test:
-        strategy:
-            matrix:
-                include:
-                    - job_name: macOS
-                      go: 1.19.x
-                      os: macOS-latest
+  test:
+    strategy:
+      matrix:
+        os: [macOS-latest, ubuntu-latest, windows-latest]
+        version: [1.19.x]
+    name: Go ${{ matrix.version }} tests on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Set up Go ${{ matrix.version }}
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ matrix.version }}
 
-                    - job_name: Linux
-                      go: 1.19.x
-                      os: ubuntu-latest
+      - name: Check out code
+        uses: actions/checkout@v3
 
-                    - job_name: Windows
-                      go: 1.19.x
-                      os: windows-latest
-        name: ${{ matrix.job_name }} Go ${{ matrix.go }}
-        runs-on: ${{ matrix.os }}
-        steps:
-            - name: Set up Go ${{ matrix.go }}
-              uses: actions/setup-go@v3
-              with:
-                  go-version: ${{ matrix.go }}
+      - name: Build code
+        run: make
 
-            - name: Check out code
-              uses: actions/checkout@v3
-
-            - name: Build code
-              run: make
-
-            - name: Run tests
-              run: make check
-    update:
-        needs: test
-        runs-on: ubuntu-latest
-        steps:
-            - name: Update report card
-              uses: creekorful/goreportcard-action@v1.0
+      - name: Run tests
+        run: make check
+  updateReports:
+    name: Update reports
+    needs: test
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Update Go Report Card
+        uses: creekorful/goreportcard-action@v1.0
