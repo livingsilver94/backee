@@ -37,3 +37,7 @@ Each key is optional, to the point it's (pointlessly) possible to write a no-op 
 A service may have different configuration files or scripts depending on the operating system it's being installed on. While the `service.yaml` file contains one-catches-all definitions, a custom `service_customName.yaml` may be written to specialize the definitions for a certain platform. When a custom variant name is passed to the CLI, only `service_customName.yaml` will be parsed.
 
 Example: run `backee -variant homeServer nginx`. This will fetch definitions from `nginx/service_homeServer.yaml`.
+
+## License
+
+This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
