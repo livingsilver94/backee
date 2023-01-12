@@ -81,7 +81,7 @@ func (inst Installer) install(srv *service.Service, ilist *List) error {
 		Setup,
 		PackageInstaller,
 		SymlinkPerformer(inst.repository),
-		CopyPerformer(inst.repository),
+		CopyPerformer(inst.repository, inst.varcache),
 		Finalizer(inst.repository, inst.varcache),
 	}
 	for _, perf := range performers {

@@ -54,18 +54,20 @@ func SymlinkPerformer(repo Repository) Performer {
 	}
 }
 
-func CopyPerformer(repo Repository) Performer {
+func CopyPerformer(repo Repository, vars VarCache) Performer {
 	return func(log logr.Logger, srv *service.Service) error {
 		if len(srv.Copies) == 0 {
 			return nil
 		}
 		log.Info("Copying files")
-		linkDir, err := repo.DataDir(srv.Name)
+		dataDir, err := repo.DataDir(srv.Name)
 		if err != nil {
 			return err
 		}
-		wr := copyWriter{}
-		return writeFilePaths(srv.Copies, linkDir, wr)
+		vars.Insert(srv.Name, service.VarDatadir, service.VarValue{Kind: service.ClearText, Value: dataDir})
+		vars.InsertMany(srv.Name, srv.Variables)
+		wr := copyWriter{variables: vars.GetAll(srv.Name)}
+		return writeFilePaths(srv.Copies, dataDir, wr)
 	}
 }
 
@@ -82,6 +84,7 @@ func Finalizer(repo Repository, vars VarCache) Performer {
 			}
 			vars.Insert(srv.Name, service.VarDatadir, service.VarValue{Kind: service.ClearText, Value: datadir})
 		}
+		vars.InsertMany(srv.Name, srv.Variables)
 		tmpl, err := template.New("finalizer").Parse(*srv.Finalize)
 		if err != nil {
 			return err
