@@ -60,12 +60,15 @@ func CopyPerformer(repo Repository, vars VarCache) Performer {
 			return nil
 		}
 		log.Info("Copying files")
+		err := vars.InsertMany(srv.Name, srv.Variables)
+		if err != nil {
+			return err
+		}
 		dataDir, err := repo.DataDir(srv.Name)
 		if err != nil {
 			return err
 		}
 		vars.Insert(srv.Name, service.VarDatadir, service.VarValue{Kind: service.ClearText, Value: dataDir})
-		vars.InsertMany(srv.Name, srv.Variables)
 		wr := copyWriter{variables: vars.GetAll(srv.Name)}
 		return writeFilePaths(srv.Copies, dataDir, wr)
 	}
@@ -77,6 +80,10 @@ func Finalizer(repo Repository, vars VarCache) Performer {
 			return nil
 		}
 		log.Info("Running finalizer script")
+		err := vars.InsertMany(srv.Name, srv.Variables)
+		if err != nil {
+			return err
+		}
 		if _, ok := vars.Get(srv.Name, service.VarDatadir); !ok {
 			datadir, err := repo.DataDir(srv.Name)
 			if err != nil {
@@ -84,7 +91,6 @@ func Finalizer(repo Repository, vars VarCache) Performer {
 			}
 			vars.Insert(srv.Name, service.VarDatadir, service.VarValue{Kind: service.ClearText, Value: datadir})
 		}
-		vars.InsertMany(srv.Name, srv.Variables)
 		tmpl, err := template.New("finalizer").Parse(*srv.Finalize)
 		if err != nil {
 			return err
