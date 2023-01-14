@@ -9,8 +9,6 @@ github.com/hashicorp/go-set v0.1.7 h1:8ZW2LQpr53UyRDdUF9kcInAV1DbsG8MVWjiSa/oxkU
 github.com/hashicorp/go-set v0.1.7/go.mod h1:ELvMcE+1mRHYPVgTFSQiecObIwZRxY5Q11EhbtmM5KQ=
 github.com/hexops/gotextdiff v1.0.3 h1:gitA9+qJrrTCsiCl7+kh75nPqQt1cx4ZkudSTLoUqJM=
 github.com/shoenig/test v0.4.0 h1:3X4xG/Chx7mzi0h71Sm6Vo38q0EYaQIBZpYFRcA1HVM=
-golang.org/x/sys v0.4.0 h1:Zr2JFtRQNX3BCZ8YtxRE9hNJYC8J6I1MVbMg6owUp18=
-golang.org/x/sys v0.4.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405 h1:yhCVgyC4o1eVCa2tZl7eS0r+SDo693bJlVdllGtEeKM=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/yaml.v3 v3.0.1 h1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA=

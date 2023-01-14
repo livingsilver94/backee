@@ -217,19 +217,18 @@ func PathOwner(path string) (UnixID, error) {
 }
 
 func parentPathOwner(path string) (UnixID, error) {
-	var id *UnixID
-	for id == nil {
+	for {
 		if len(path) == 1 {
 			return UnixID{}, fmt.Errorf("parent directory of %s: %w", path, fs.ErrNotExist)
 		}
-		var err error
-		*id, err = PathOwner(path)
+		id, err := PathOwner(path)
 		if err != nil {
 			if !errors.Is(err, fs.ErrNotExist) {
 				return UnixID{}, err
 			}
 			path = filepath.Dir(path)
+			continue
 		}
+		return id, nil
 	}
-	return *id, nil
 }

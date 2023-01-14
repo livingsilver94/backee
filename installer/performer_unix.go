@@ -4,8 +4,7 @@ package installer
 
 import (
 	"io/fs"
-
-	"golang.org/x/sys/unix"
+	"syscall"
 )
 
 func runScript(script string) error {
@@ -22,22 +21,22 @@ func PathOwnerFS(sys fs.FS, path string) (UnixID, error) {
 	if err != nil {
 		return UnixID{}, err
 	}
-	stat := info.Sys().(unix.Stat_t)
+	stat := info.Sys().(*syscall.Stat_t)
 	return UnixID{UID: stat.Uid, GID: stat.Gid}, nil
 }
 
 func RunAsUnixID(f func() error, id UnixID) error {
-	oldUID := unix.Getuid()
-	oldGID := unix.Getgid()
-	err := unix.Setuid(int(id.UID))
+	oldUID := syscall.Getuid()
+	oldGID := syscall.Getgid()
+	err := syscall.Setuid(int(id.UID))
 	if err != nil {
 		return err
 	}
-	defer unix.Setuid(oldUID)
-	err = unix.Setgid(int(id.GID))
+	defer syscall.Setuid(oldUID)
+	err = syscall.Setgid(int(id.GID))
 	if err != nil {
 		return err
 	}
-	defer unix.Setgid(oldGID)
+	defer syscall.Setgid(oldGID)
 	return f()
 }
