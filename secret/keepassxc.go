@@ -27,7 +27,7 @@ func (k KeepassXC) Value(key string) (string, error) {
 		return "", err
 	}
 	go func() {
-		io.WriteString(in, k.password)
+		io.WriteString(in, k.password+"\n")
 	}()
 
 	value, err := cmd.Output()
