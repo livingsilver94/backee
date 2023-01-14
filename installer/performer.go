@@ -147,6 +147,9 @@ type symlinkWriter struct {
 }
 
 func (w symlinkWriter) writeFile(dstPath, srcPath string) error {
+	if _, err := os.Stat(srcPath); err != nil { // Check that srcPath exists.
+		return err
+	}
 	err := os.Symlink(srcPath, dstPath)
 	if err != nil {
 		if !errors.Is(err, fs.ErrExist) {
