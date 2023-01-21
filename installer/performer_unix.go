@@ -3,6 +3,7 @@
 package installer
 
 import (
+	"fmt"
 	"io/fs"
 	"syscall"
 )
@@ -30,12 +31,12 @@ func RunAsUnixID(f func() error, id UnixID) error {
 	oldGID := syscall.Getgid()
 	err := syscall.Setgid(int(id.GID))
 	if err != nil {
-		return err
+		return fmt.Errorf("setting GID %d: %w", id.GID, err)
 	}
 	defer syscall.Setgid(oldGID)
 	err = syscall.Setuid(int(id.UID))
 	if err != nil {
-		return err
+		return fmt.Errorf("setting UID %d: %w", id.UID, err)
 	}
 	defer syscall.Setuid(oldUID)
 	return f()
