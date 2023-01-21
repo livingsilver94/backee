@@ -28,15 +28,15 @@ func PathOwnerFS(sys fs.FS, path string) (UnixID, error) {
 func RunAsUnixID(f func() error, id UnixID) error {
 	oldUID := syscall.Getuid()
 	oldGID := syscall.Getgid()
-	err := syscall.Setuid(int(id.UID))
-	if err != nil {
-		return err
-	}
-	defer syscall.Setuid(oldUID)
-	err = syscall.Setgid(int(id.GID))
+	err := syscall.Setgid(int(id.GID))
 	if err != nil {
 		return err
 	}
 	defer syscall.Setgid(oldGID)
+	err = syscall.Setuid(int(id.UID))
+	if err != nil {
+		return err
+	}
+	defer syscall.Setuid(oldUID)
 	return f()
 }
