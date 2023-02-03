@@ -22,7 +22,7 @@ func run() error {
 
 	opts := make([]installer.Option, 0, 2)
 	if !args.Quiet {
-		opts = append(opts, installer.WithLogger(cli.Logger))
+		opts = append(opts, installer.WithLogger(cli.NewLogger(cli.LogInfo, false)))
 	}
 	if args.KeepassXC.Path != "" {
 		store := secret.NewKeepassXC(args.KeepassXC.Path, args.KeepassXC.Password)
@@ -35,7 +35,7 @@ func run() error {
 func main() {
 	err := run()
 	if err != nil {
-		cli.Logger.Error(err, "")
+		cli.NewLogger(cli.LogInfo, false).Error(err, "")
 	}
 }
 
