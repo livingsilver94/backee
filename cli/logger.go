@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/fatih/color"
 	"github.com/go-logr/logr"
 )
 
@@ -15,6 +16,12 @@ type LogLevel int
 const (
 	LogError LogLevel = 1
 	LogInfo  LogLevel = 2
+)
+
+type ANSI string
+
+const (
+	ANSIReset ANSI = ""
 )
 
 func NewLogger(level LogLevel, colored bool) logr.Logger {
@@ -91,14 +98,14 @@ func validateKeyVals(keyVals ...interface{}) {
 func (l logSink) printPrefix() {
 	date := time.Now().Format("15:04:05")
 	if l.name != "" {
-		fmt.Fprintf(l.writer, "[%s] %s — ", date, l.name)
+		fmt.Fprintf(l.writer, "[%s] %s — ", date, l.color(color.Bold).Sprint(l.name))
 	} else {
 		fmt.Fprintf(l.writer, "[%s] ", date)
 	}
 }
 
 func (l logSink) printError(err error) {
-	fmt.Fprintf(l.writer, "ERROR: %s", err)
+	l.color(color.FgRed).Fprintf(l.writer, "ERROR: %s", err)
 }
 
 // printSeparator prints a separator between the message and the key/value list.
@@ -119,4 +126,12 @@ func (l logSink) printKeyVals(msg string, keyVals ...interface{}) {
 	}
 	fmt.Fprint(l.writer, "\n")
 	l.writer.Flush()
+}
+
+func (l logSink) color(attrs ...color.Attribute) *color.Color {
+	c := color.New(attrs...)
+	if !l.colored {
+		c.DisableColor()
+	}
+	return c
 }
