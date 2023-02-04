@@ -155,7 +155,7 @@ func (w symlinkWriter) writeFile(dstPath, srcPath string) error {
 		if !errors.Is(err, fs.ErrExist) {
 			return err
 		}
-		w.log.Info("already exists", dstPath)
+		w.log.Info("\tAlready exists", "path", dstPath)
 	}
 	return nil
 }
