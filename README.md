@@ -2,9 +2,13 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/livingsilver94/backee)](https://goreportcard.com/report/github.com/livingsilver94/backee)
 
 </br>
-Backee is configuration restorer for Unix computers. It reads a series of `service.yaml` files that contain operating system dependencies, dependencies among other services and POSIX shell scripts. Such sections are then used to restore services that a user wanted to backup. It also possible to restore files provided in the `data` directory. You can think it as a dotfiles manager, but more powerful and with the ability to restore system-wide configuration.
 
-Backee executes all child processes as the user executing Backee, so you may need to add privilege elevation commands where necessary such as `sudo`.
+Backee is configuration restorer for Unix and Windows computers. It reads a series of `service.yaml` files that contain operating system dependencies, dependencies among other services and POSIX or Powershell scripts (the latter on Windows). Such sections are then used to restore services that a user wanted to backup, right at your fingertip.
+
+It also possible to restore files without scripts. The `links` directory symbolic-links files to their destination path, while the  `data` directory *copies* files, optionally by editing it using the Go template engine, so that a file could be customized for different platforms. You can think Backee as an advanced dotfiles manager, whilst easy to use with its declarative definition files.
+
+While not strictly necessary, Backee should be run by a privileged user to unleash its potential: restoring system-wide configuration files, webserver resources or installing packages, to name a few.<br/>
+On Unix, it links and copies files impersonating the owner of the directory. To retain your environment variables in Backee, it is suggested to run `sudo -E backee`.
 
 ## Configuration format
 
