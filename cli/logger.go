@@ -60,6 +60,7 @@ func (l logSink) Error(err error, msg string, keyVals ...interface{}) {
 	validateKeyVals(keyVals...)
 	l.printPrefix()
 	l.printError(err)
+	l.printSeparator()
 	l.printKeyVals(msg, keyVals...)
 }
 
@@ -108,7 +109,7 @@ func (l logSink) printError(err error) {
 	l.color(color.FgRed).Fprintf(l.writer, "ERROR: %s", err)
 }
 
-// printSeparator prints a separator between the message and the key/value list.
+// printSeparator prints a separator between pieces of information.
 func (l logSink) printSeparator() {
 	fmt.Fprint(l.writer, " | ")
 }
