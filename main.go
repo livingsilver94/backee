@@ -1,6 +1,9 @@
 package main
 
 import (
+	"os"
+
+	"github.com/go-logr/logr"
 	"github.com/livingsilver94/backee/cli"
 	"github.com/livingsilver94/backee/installer"
 	"github.com/livingsilver94/backee/repo"
@@ -8,10 +11,17 @@ import (
 	"github.com/livingsilver94/backee/service"
 )
 
+var logger logr.Logger
+
 func run() error {
-	args, err := cli.ParseArguments()
-	if err != nil {
-		return err
+	args := cli.ParseArguments()
+	initLogger(args)
+	if args.Directory == "" {
+		cwd, err := os.Getwd()
+		if err != nil {
+			return err
+		}
+		args.Directory = cwd
 	}
 
 	rep := repo.NewFSRepoVariant(repo.NewOSFS(args.Directory), args.Variant)
@@ -22,7 +32,7 @@ func run() error {
 
 	opts := make([]installer.Option, 0, 2)
 	if !args.Quiet {
-		opts = append(opts, installer.WithLogger(cli.Logger))
+		opts = append(opts, installer.WithLogger(logger))
 	}
 	if args.KeepassXC.Path != "" {
 		store := secret.NewKeepassXC(args.KeepassXC.Path, args.KeepassXC.Password)
@@ -35,8 +45,23 @@ func run() error {
 func main() {
 	err := run()
 	if err != nil {
-		cli.Logger.Error(err, "")
+		logger.Error(err, "")
+		os.Exit(1)
 	}
+}
+
+func initLogger(args cli.Arguments) {
+	var (
+		level   = cli.LogInfo
+		colored = true
+	)
+	if args.Quiet {
+		level = cli.LogError
+	}
+	if args.NoColor {
+		colored = false
+	}
+	logger = cli.NewLogger(level, colored)
 }
 
 func services(rep repo.FSRepo, names []string) ([]*service.Service, error) {
