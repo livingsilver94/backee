@@ -3,7 +3,8 @@ GO ?= go
 BINNAME := backee
 OUTPATH := $(CURDIR)/build/$(BINNAME)
 
-$(OUTPATH):
+.PHONY: build
+build:
 	$(GO) build -o $(OUTPATH) main.go
 
 .PHONY: check
@@ -14,7 +15,8 @@ DESTDIR ?= /
 prefix  ?= /usr/local
 bindir  ?= $(prefix)/bin
 
-install: $(OUTPATH)
+.PHONY: install
+install: build
 	install -Dm00755 $(OUTPATH) -t $(DESTDIR)/$(bindir)
 
 .PHONY: clean
