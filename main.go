@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/go-logr/logr"
@@ -13,8 +14,17 @@ import (
 
 var logger logr.Logger
 
+// Version will be injected by ld flags.
+var Version string
+
 func run() error {
 	args := cli.ParseArguments()
+
+	if args.Version {
+		fmt.Println(Version)
+		return nil
+	}
+
 	initLogger(args)
 	if args.Directory == "" {
 		cwd, err := os.Getwd()

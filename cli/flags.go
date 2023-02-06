@@ -13,10 +13,11 @@ type Arguments struct {
 	Directory string    `short:"C" type:"existingdir" help:"Change the base directory."`
 	KeepassXC KeepassXC `embed:"" prefix:"keepassxc."`
 	NoColor   bool      `help:"Do not color output (the default when in a non-interactive shell)."`
-	Quiet     bool      `short:"q" help:"Do not print anything on the terminal."`
+	Quiet     bool      `short:"q" help:"Do not print anything on the terminal except errors."`
 	Variant   string    `help:"Specify the system variant."`
+	Version   bool      `short:"v" help:"Print the version number and exit."`
 
-	Services []string `arg:"" help:"Services to install."`
+	Services []string `arg:"" optional:"" help:"Services to install."`
 }
 
 func ParseArguments() Arguments {
