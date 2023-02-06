@@ -104,7 +104,7 @@ func (repo FSRepo) LinkDir(name string) (string, error) {
 }
 
 func (repo FSRepo) resolveDeps(graph *DepGraph, level int, deps *service.DepSet) error {
-	for _, depName := range deps.List() {
+	for _, depName := range deps.Slice() {
 		srv, err := repo.Service(depName)
 		if err != nil {
 			return err
@@ -117,11 +117,11 @@ func (repo FSRepo) resolveDeps(graph *DepGraph, level int, deps *service.DepSet)
 
 	// Gather dependencies of dependencies.
 	subdeps := service.NewDepSet(depSetDefaultCap)
-	for _, subdep := range graph.Level(level).List() {
+	for _, subdep := range graph.Level(level).Slice() {
 		if subdep.Depends == nil {
 			continue
 		}
-		subdeps.InsertAll(subdep.Depends.List())
+		subdeps.InsertAll(subdep.Depends.Slice())
 	}
 	return repo.resolveDeps(graph, level+1, &subdeps)
 }
