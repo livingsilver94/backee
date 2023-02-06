@@ -9,13 +9,13 @@ import (
 )
 
 const (
-	// VarDelimiter delimits a variable name from a simple string.
-	// A variable has VarDelimiter before and after its name.
-	VarDelimiter = "%"
-
-	// VarDatadir is the variable name that idenfies a Service's
-	// data directory path.
+	// VarDatadir is the variable name that
+	// idenfies a Service's data directory path.
 	VarDatadir = "datadir"
+)
+
+var (
+	DefaultPkgManager = []string{"pkcon", "install", "-y"}
 )
 
 type Service struct {
@@ -33,18 +33,27 @@ type Service struct {
 func NewFromYAML(name string, yml []byte) (*Service, error) {
 	var srv Service
 	err := yaml.Unmarshal(yml, &srv)
+	if err != nil {
+		return nil, err
+	}
 	srv.Name = name
-	return &srv, err
+	if srv.PkgManager == nil {
+		srv.PkgManager = DefaultPkgManager
+	}
+	return &srv, nil
 }
 
 func NewFromYAMLReader(name string, rd io.Reader) (*Service, error) {
 	var srv Service
 	err := yaml.NewDecoder(rd).Decode(&srv)
-	srv.Name = name
-	if errors.Is(err, io.EOF) {
-		err = nil
+	if err != nil && !errors.Is(err, io.EOF) {
+		return nil, err
 	}
-	return &srv, err
+	srv.Name = name
+	if srv.PkgManager == nil {
+		srv.PkgManager = DefaultPkgManager
+	}
+	return &srv, nil
 }
 
 func (srv *Service) Hash() string {

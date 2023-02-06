@@ -13,7 +13,7 @@ import (
 func TestService(t *testing.T) {
 	fs := fstest.MapFS{"srv/service.yaml": &fstest.MapFile{}}
 	rep := repo.NewFSRepo(fs)
-	expected := &service.Service{Name: "srv"}
+	expected := &service.Service{Name: "srv", PkgManager: service.DefaultPkgManager}
 	obtained, err := rep.Service("srv")
 	if err != nil {
 		t.Fatal(err)
@@ -31,7 +31,9 @@ func TestAllServices(t *testing.T) {
 		"garbage.txt":       &fstest.MapFile{Data: []byte("please ignore"), Mode: 0644},
 	}
 	rep := repo.NewFSRepo(fs)
-	expected := []*service.Service{{Name: "srv1"}, {Name: "srv2"}}
+	expected := []*service.Service{
+		{Name: "srv1", PkgManager: service.DefaultPkgManager},
+		{Name: "srv2", PkgManager: service.DefaultPkgManager}}
 	obtained, err := rep.AllServices()
 	if err != nil {
 		t.Fatal(err)
