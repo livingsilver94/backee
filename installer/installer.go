@@ -45,6 +45,10 @@ func (inst Installer) Install(services []*service.Service) bool {
 	ilistFile, err := os.OpenFile(installedListFilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	var list List
 	if err != nil {
+		inst.logger.Error(
+			err,
+			"Continuing without populating the installation list",
+			"path", installedListFilename)
 		list = NewList(nil)
 	} else {
 		defer ilistFile.Close()
@@ -72,6 +76,7 @@ func (inst Installer) Install(services []*service.Service) bool {
 	return inst.setError(nil)
 }
 
+// Error returns the first error encountered while Installing.
 func (inst Installer) Error() error {
 	return inst.err
 }
