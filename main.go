@@ -49,7 +49,8 @@ func run() error {
 		opts = append(opts, installer.WithStore("keepassxc", store))
 	}
 	ins := installer.New(rep, opts...)
-	return ins.Install(srv)
+	ins.Install(srv)
+	return ins.Error()
 }
 
 func main() {

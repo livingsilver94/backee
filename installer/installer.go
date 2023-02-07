@@ -26,6 +26,7 @@ type Installer struct {
 	repository Repository
 	varcache   VarCache
 	logger     logr.Logger
+	err        error
 }
 
 func New(repository Repository, options ...Option) Installer {
@@ -40,7 +41,7 @@ func New(repository Repository, options ...Option) Installer {
 	return i
 }
 
-func (inst Installer) Install(services []*service.Service) error {
+func (inst Installer) Install(services []*service.Service) bool {
 	ilistFile, err := os.OpenFile(installedListFilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	var list List
 	if err != nil {
@@ -53,22 +54,26 @@ func (inst Installer) Install(services []*service.Service) error {
 	for _, srv := range services {
 		depGraph, err := inst.repository.ResolveDeps(srv)
 		if err != nil {
-			return err
+			return inst.setError(err)
 		}
 		for level := depGraph.Depth() - 1; level >= 0; level-- {
-			for _, dep := range depGraph.Level(level).List() {
+			for _, dep := range depGraph.Level(level).Slice() {
 				err := inst.install(dep, &list)
 				if err != nil {
-					return err
+					return inst.setError(err)
 				}
 			}
 		}
 		err = inst.install(srv, &list)
 		if err != nil {
-			return err
+			return inst.setError(err)
 		}
 	}
-	return nil
+	return inst.setError(nil)
+}
+
+func (inst Installer) Error() error {
+	return inst.err
 }
 
 func (inst Installer) install(srv *service.Service, ilist *List) error {
@@ -92,6 +97,11 @@ func (inst Installer) install(srv *service.Service, ilist *List) error {
 	}
 	ilist.Insert(srv.Name)
 	return nil
+}
+
+func (inst *Installer) setError(err error) bool {
+	inst.err = err
+	return err == nil
 }
 
 type Option func(*Installer)
