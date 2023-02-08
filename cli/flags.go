@@ -17,7 +17,7 @@ type Arguments struct {
 	Variant   string    `help:"Specify the system variant."`
 	Version   bool      `short:"v" help:"Print the version number and exit."`
 
-	Services []string `arg:"" optional:"" help:"Services to install."`
+	Services []string `arg:"" optional:"" help:"Services to install. Pass none to install all services in the base directory."`
 }
 
 func ParseArguments() Arguments {
