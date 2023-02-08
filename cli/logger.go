@@ -11,19 +11,18 @@ import (
 	"github.com/go-logr/logr"
 )
 
+// LogLevel sets the verbosity of a logger.
 type LogLevel int
 
 const (
+	// LogError is the least verbose level of a logger. It only logs errors.
 	LogError LogLevel = 1
-	LogInfo  LogLevel = 2
+	// LogInfo logs information and error messages.
+	LogInfo LogLevel = 2
 )
 
-type ANSI string
-
-const (
-	ANSIReset ANSI = ""
-)
-
+// NewLogger creates a new structured logger.
+// colored regulates whether the logger will use colored output.
 func NewLogger(level LogLevel, colored bool) logr.Logger {
 	sink := logSink{
 		writer:  bufio.NewWriter(os.Stdout),
@@ -33,6 +32,9 @@ func NewLogger(level LogLevel, colored bool) logr.Logger {
 	return logr.New(sink)
 }
 
+// logSink is our custom logr.LogSink implementation.
+// It aims to be a structured logger with decent aesthetics to human readers,
+// although it sacrifices parsability a little.
 type logSink struct {
 	name    string
 	keyVals map[string]interface{}
@@ -41,12 +43,15 @@ type logSink struct {
 	colored bool
 }
 
+// Init implements logr.LogSink's Init method.
 func (l logSink) Init(info logr.RuntimeInfo) {}
 
+// Enabled implements logr.LogSink's Enabled method.
 func (l logSink) Enabled(level int) bool {
 	return l.level >= LogLevel(level)
 }
 
+// Info implements logr.LogSink's Info method.
 func (l logSink) Info(level int, msg string, keyVals ...interface{}) {
 	validateKeyVals(keyVals...)
 	if !l.Enabled(level) {
@@ -56,6 +61,7 @@ func (l logSink) Info(level int, msg string, keyVals ...interface{}) {
 	l.printKeyVals(msg, keyVals...)
 }
 
+// Error implements logr.LogSink's Error method.
 func (l logSink) Error(err error, msg string, keyVals ...interface{}) {
 	validateKeyVals(keyVals...)
 	l.printPrefix()
@@ -64,6 +70,7 @@ func (l logSink) Error(err error, msg string, keyVals ...interface{}) {
 	l.printKeyVals(msg, keyVals...)
 }
 
+// WithValues implements logr.LogSink's WithValues method.
 func (l logSink) WithValues(keyVals ...interface{}) logr.LogSink {
 	validateKeyVals(keyVals...)
 	kvMap := make(map[string]interface{}, len(l.keyVals)+len(keyVals)/2)
@@ -78,6 +85,7 @@ func (l logSink) WithValues(keyVals ...interface{}) logr.LogSink {
 	return copy
 }
 
+// WithName implements logr.LogSink's WithName method.
 func (l logSink) WithName(name string) logr.LogSink {
 	var newName string
 	if l.name == "" {
