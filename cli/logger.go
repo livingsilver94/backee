@@ -57,19 +57,13 @@ func (l logSink) Info(level int, msg string, keyVals ...interface{}) {
 		return
 	}
 	validateKeyVals(keyVals...)
-	l.printPrefix()
-	l.printKeyVals(msg, keyVals...)
+	l.printLine(nil, msg, keyVals...)
 }
 
 // Error implements logr.LogSink's Error method.
 func (l logSink) Error(err error, msg string, keyVals ...interface{}) {
 	validateKeyVals(keyVals...)
-	l.printPrefix()
-	l.printError(err)
-	if msg != "" {
-		l.printSeparator()
-	}
-	l.printKeyVals(msg, keyVals...)
+	l.printLine(err, msg, keyVals...)
 }
 
 // WithValues implements logr.LogSink's WithValues method.
@@ -106,28 +100,19 @@ func validateKeyVals(keyVals ...interface{}) {
 	}
 }
 
-func (l logSink) printPrefix() {
-	date := time.Now().Format("15:04:05")
-	if l.name != "" {
-		fmt.Fprintf(l.writer, "[%s] %s — ", date, l.color(color.Bold).Sprint(l.name))
-	} else {
-		fmt.Fprintf(l.writer, "[%s] ", date)
+func (l logSink) printLine(err error, msg string, keyVals ...interface{}) {
+	l.printPrefix()
+	if err != nil {
+		l.color(color.FgRed).Fprintf(l.writer, "ERROR: %s", err)
+		if msg != "" {
+			l.printSeparator()
+		}
 	}
-}
-
-func (l logSink) printError(err error) {
-	l.color(color.FgRed).Fprintf(l.writer, "ERROR: %s", err)
-}
-
-// printSeparator prints a separator between pieces of information.
-func (l logSink) printSeparator() {
-	fmt.Fprint(l.writer, " | ")
-}
-
-func (l logSink) printKeyVals(msg string, keyVals ...interface{}) {
-	fmt.Fprint(l.writer, msg)
-	if len(l.keyVals) != 0 || len(keyVals) != 0 {
-		l.printSeparator()
+	if msg != "" {
+		fmt.Fprint(l.writer, msg)
+		if len(l.keyVals) != 0 || len(keyVals) != 0 {
+			l.printSeparator()
+		}
 	}
 	for k, v := range l.keyVals {
 		fmt.Fprintf(l.writer, "%s: %+v  ", k, v)
@@ -137,6 +122,20 @@ func (l logSink) printKeyVals(msg string, keyVals ...interface{}) {
 	}
 	fmt.Fprint(l.writer, "\n")
 	l.writer.Flush()
+}
+
+func (l logSink) printPrefix() {
+	date := time.Now().Format("15:04:05")
+	if l.name != "" {
+		fmt.Fprintf(l.writer, "[%s] %s — ", date, l.color(color.Bold).Sprint(l.name))
+	} else {
+		fmt.Fprintf(l.writer, "[%s] ", date)
+	}
+}
+
+// printSeparator prints a separator between pieces of information.
+func (l logSink) printSeparator() {
+	fmt.Fprint(l.writer, " | ")
 }
 
 func (l logSink) color(attrs ...color.Attribute) *color.Color {
