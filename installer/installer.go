@@ -41,7 +41,7 @@ func New(repository Repository, options ...Option) Installer {
 	return i
 }
 
-func (inst Installer) Install(services []*service.Service) bool {
+func (inst *Installer) Install(services []*service.Service) bool {
 	ilistFile, err := os.OpenFile(installedListFilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	var list List
 	if err != nil {
@@ -77,11 +77,11 @@ func (inst Installer) Install(services []*service.Service) bool {
 }
 
 // Error returns the first error encountered while Installing.
-func (inst Installer) Error() error {
+func (inst *Installer) Error() error {
 	return inst.err
 }
 
-func (inst Installer) install(srv *service.Service, ilist *List) error {
+func (inst *Installer) install(srv *service.Service, ilist *List) error {
 	log := inst.logger.WithName(srv.Name)
 	if ilist.Contains(srv.Name) {
 		log.Info("Already installed")
