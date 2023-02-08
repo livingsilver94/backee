@@ -53,10 +53,10 @@ func (l logSink) Enabled(level int) bool {
 
 // Info implements logr.LogSink's Info method.
 func (l logSink) Info(level int, msg string, keyVals ...interface{}) {
-	validateKeyVals(keyVals...)
 	if !l.Enabled(level) {
 		return
 	}
+	validateKeyVals(keyVals...)
 	l.printPrefix()
 	l.printKeyVals(msg, keyVals...)
 }
@@ -66,7 +66,9 @@ func (l logSink) Error(err error, msg string, keyVals ...interface{}) {
 	validateKeyVals(keyVals...)
 	l.printPrefix()
 	l.printError(err)
-	l.printSeparator()
+	if msg != "" {
+		l.printSeparator()
+	}
 	l.printKeyVals(msg, keyVals...)
 }
 
