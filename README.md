@@ -8,7 +8,7 @@ Backee is configuration restorer for Unix and Windows computers. It reads a seri
 It also possible to restore files without scripts. The `links` directory symbolic-links files to their destination path, while the  `data` directory *copies* files, optionally by editing it using the Go template engine, so that a file could be customized for a particular platform on-the-fly. You can think Backee as an advanced dotfiles manager, whilst easy to use with its declarative definition files.
 
 While not strictly necessary, Backee should be run by a privileged user to unleash its potential: restoring system-wide configuration files, webserver resources or installing packages, to name a few.<br/>
-On Unix, it links and copies files impersonating the owner of the directory. To retain your environment variables in Backee, it is suggested to run `sudo -E backee`.
+On Unix, it links and copies files as the user that run it, but it tries to impersonate the owner of the directory on failure. To retain your environment variables in Backee, it is suggested to run `sudo -E backee`.
 
 ## Configuration format
 

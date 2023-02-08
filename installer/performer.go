@@ -112,29 +112,37 @@ func writeFilePaths(paths map[string]service.FilePath, srcBase string, writer fi
 	for srcFile, param := range paths {
 		srcPath := filepath.Join(srcBase, srcFile)
 		dstPath := ReplaceEnvVars(param.Path)
+		f := func() error { return writeFilePath(dstPath, srcPath, param.Mode, writer) }
 
-		dstDir := filepath.Dir(dstPath)
-		id, err := parentPathOwner(dstDir)
+		err := f()
 		if err != nil {
-			return err
+			if !errors.Is(err, fs.ErrPermission) {
+				return err
+			}
+			owner, err := parentPathOwner(dstPath)
+			if err != nil {
+				return err
+			}
+			err = RunAsUnixID(f, owner)
+			if err != nil {
+				return err
+			}
 		}
-		err = RunAsUnixID(func() error {
-			err := os.MkdirAll(dstDir, 0755)
-			if err != nil {
-				return err
-			}
-			err = writer.writeFile(dstPath, srcPath)
-			if err != nil {
-				return err
-			}
-			if param.Mode != 0 {
-				err := os.Chmod(dstPath, fs.FileMode(param.Mode))
-				if err != nil {
-					return err
-				}
-			}
-			return nil
-		}, id)
+	}
+	return nil
+}
+
+func writeFilePath(dst, src string, mode uint16, writer fileWriter) error {
+	err := os.MkdirAll(filepath.Dir(dst), 0755)
+	if err != nil {
+		return err
+	}
+	err = writer.writeFile(dst, src)
+	if err != nil {
+		return err
+	}
+	if mode != 0 {
+		err := os.Chmod(dst, fs.FileMode(mode))
 		if err != nil {
 			return err
 		}
