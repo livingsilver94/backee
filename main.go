@@ -61,8 +61,10 @@ func run() error {
 
 func main() {
 	err := run()
-	if err != nil && !errors.Is(err, errSilentFailure) {
-		logger.Error(err, "")
+	if err != nil {
+		if !errors.Is(err, errSilentFailure) {
+			logger.Error(err, "")
+		}
 		os.Exit(1)
 	}
 }

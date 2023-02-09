@@ -79,7 +79,7 @@ func (inst *Installer) installHierarchy(srv *service.Service, list *List) bool {
 			}
 		}
 	}
-	return !inst.installSingle(srv, list)
+	return inst.installSingle(srv, list)
 }
 
 func (inst *Installer) installSingle(srv *service.Service, ilist *List) bool {
