@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -12,10 +13,12 @@ import (
 	"github.com/livingsilver94/backee/service"
 )
 
-var logger logr.Logger
-
-// Version will be injected by ld flags.
-var Version string
+var (
+	logger           logr.Logger
+	errSilentFailure = errors.New("application errored out, but don't tell anyone")
+	// Version will be injected by ld flags.
+	Version string
+)
 
 func run() error {
 	args := cli.ParseArguments()
@@ -49,13 +52,16 @@ func run() error {
 		opts = append(opts, installer.WithStore("keepassxc", store))
 	}
 	ins := installer.New(rep, opts...)
-	ins.Install(srv)
-	return ins.Error()
+	if !ins.Install(srv) {
+		// The installer already logged the error.
+		return errSilentFailure
+	}
+	return nil
 }
 
 func main() {
 	err := run()
-	if err != nil {
+	if err != nil && !errors.Is(err, errSilentFailure) {
 		logger.Error(err, "")
 		os.Exit(1)
 	}

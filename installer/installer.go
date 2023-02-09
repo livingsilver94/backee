@@ -99,6 +99,7 @@ func (inst *Installer) installSingle(srv *service.Service, ilist *List) bool {
 	for _, perf := range performers {
 		err := perf(log, srv)
 		if err != nil {
+			log.Error(err, "")
 			return inst.setError(err)
 		}
 	}
