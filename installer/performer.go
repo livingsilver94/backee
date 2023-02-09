@@ -110,31 +110,34 @@ type fileWriter interface {
 
 func writeFilePaths(paths map[string]service.FilePath, srcBase string, writer fileWriter) error {
 	for srcFile, param := range paths {
-		srcPath := filepath.Join(srcBase, srcFile)
 		dstPath := ReplaceEnvVars(param.Path)
+		srcPath := filepath.Join(srcBase, srcFile)
+		f := func() error { return writeFilePath(dstPath, srcPath, param.Mode, writer) }
 
 		dstDir := filepath.Dir(dstPath)
 		id, err := parentPathOwner(dstDir)
 		if err != nil {
 			return err
 		}
-		err = RunAsUnixID(func() error {
-			err := os.MkdirAll(dstDir, 0755)
-			if err != nil {
-				return err
-			}
-			err = writer.writeFile(dstPath, srcPath)
-			if err != nil {
-				return err
-			}
-			if param.Mode != 0 {
-				err := os.Chmod(dstPath, fs.FileMode(param.Mode))
-				if err != nil {
-					return err
-				}
-			}
-			return nil
-		}, id)
+		err = RunAsUnixID(f, id)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func writeFilePath(dst, src string, mode uint16, writer fileWriter) error {
+	err := os.MkdirAll(filepath.Dir(dst), 0755)
+	if err != nil {
+		return err
+	}
+	err = writer.writeFile(dst, src)
+	if err != nil {
+		return err
+	}
+	if mode != 0 {
+		err := os.Chmod(dst, fs.FileMode(mode))
 		if err != nil {
 			return err
 		}
