@@ -8,7 +8,9 @@ Backee is configuration restorer for Unix and Windows computers. It reads a seri
 It also possible to restore files without scripts. The `links` directory symbolic-links files to their destination path, while the  `data` directory *copies* files, optionally by editing it using the Go template engine, so that a file could be customized for a particular platform on-the-fly. You can think Backee as an advanced dotfiles manager, whilst easy to use with its declarative definition files.
 
 While not strictly necessary, Backee should be run by a privileged user to unleash its potential: restoring system-wide configuration files, webserver resources or installing packages, to name a few.<br/>
-On Unix, it links and copies files impersonating the owner of the directory. To retain your environment variables in Backee, it is suggested to run `sudo -E backee`.
+On Unix, it links and copies files impersonating the owner of the directory.
+
+If you are using `sudo`, please read the `sudo` caveats below.
 
 ## Configuration format
 
@@ -46,6 +48,12 @@ Backee supports KeepassXC as the secret manager for variables that shouldn't be 
 A service may have different configuration files or scripts depending on the operating system it's being installed on. While the `service.yaml` file contains one-catches-all definitions, a custom `service_customName.yaml` may be written to specialize the definitions for a certain platform. When a custom variant name is passed to the CLI, only `service_customName.yaml` will be parsed.
 
 Example: run `backee --variant homeServer nginx`. This will fetch definitions from `nginx/service_homeServer.yaml`.
+
+## If you are using `sudo`…
+
+Running `sudo` alone doesn't preserve your environment variables. If you rely on them for links and/or copies, or in your setup and finalization scripts, run `sudo -E backee` to keep them.
+
+Some platforms configure `sudo` to not retain your $HOME environment variable: you'll be using the root home instead of yours. Use `sudo -E HOME="$HOME" backee` to ensure your home will be retained.
 
 ## License
 
