@@ -56,24 +56,11 @@ func (inst *Installer) Install(services []*service.Service) bool {
 	}
 
 	for _, srv := range services {
-		depGraph, err := inst.repository.ResolveDeps(srv)
-		if err != nil {
-			return inst.setError(err)
-		}
-		for level := depGraph.Depth() - 1; level >= 0; level-- {
-			for _, dep := range depGraph.Level(level).Slice() {
-				err := inst.install(dep, &list)
-				if err != nil {
-					return inst.setError(err)
-				}
-			}
-		}
-		err = inst.install(srv, &list)
-		if err != nil {
-			return inst.setError(err)
+		if !inst.installHierarchy(srv, &list) {
+			return false
 		}
 	}
-	return inst.setError(nil)
+	return true
 }
 
 // Error returns the first error encountered while Installing.
@@ -81,11 +68,26 @@ func (inst *Installer) Error() error {
 	return inst.err
 }
 
-func (inst *Installer) install(srv *service.Service, ilist *List) error {
+func (inst *Installer) installHierarchy(srv *service.Service, list *List) bool {
+	depGraph, err := inst.repository.ResolveDeps(srv)
+	if err != nil {
+		return inst.setError(err)
+	}
+	for level := depGraph.Depth() - 1; level >= 0; level-- {
+		for _, dep := range depGraph.Level(level).Slice() {
+			if !inst.installSingle(dep, list) {
+				return false
+			}
+		}
+	}
+	return !inst.installSingle(srv, list)
+}
+
+func (inst *Installer) installSingle(srv *service.Service, ilist *List) bool {
 	log := inst.logger.WithName(srv.Name)
 	if ilist.Contains(srv.Name) {
 		log.Info("Already installed")
-		return nil
+		return inst.setError(nil)
 	}
 	performers := []Performer{
 		Setup,
@@ -97,11 +99,11 @@ func (inst *Installer) install(srv *service.Service, ilist *List) error {
 	for _, perf := range performers {
 		err := perf(log, srv)
 		if err != nil {
-			return err
+			return inst.setError(err)
 		}
 	}
 	ilist.Insert(srv.Name)
-	return nil
+	return inst.setError(nil)
 }
 
 func (inst *Installer) setError(err error) bool {
