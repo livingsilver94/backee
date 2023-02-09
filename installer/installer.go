@@ -47,8 +47,7 @@ func (inst *Installer) Install(services []*service.Service) bool {
 	if err != nil {
 		inst.logger.Error(
 			err,
-			"Continuing without populating the installation list",
-			"path", installedListFilename)
+			"Continuing without populating the installation list")
 		list = NewList(nil)
 	} else {
 		defer ilistFile.Close()
