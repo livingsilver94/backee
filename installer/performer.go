@@ -50,7 +50,7 @@ func SymlinkPerformer(repo Repository) Performer {
 			return err
 		}
 		wr := symlinkWriter{log: log}
-		return writeFilePaths(srv.Links, linkDir, wr)
+		return writeFilePaths(srv.Links, linkDir, &wr)
 	}
 }
 
@@ -70,7 +70,7 @@ func CopyPerformer(repo Repository, vars VarCache) Performer {
 		}
 		vars.Insert(srv.Name, service.VarDatadir, service.VarValue{Kind: service.ClearText, Value: dataDir})
 		wr := copyWriter{variables: vars.GetAll(srv.Name)}
-		return writeFilePaths(srv.Copies, dataDir, wr)
+		return writeFilePaths(srv.Copies, dataDir, &wr)
 	}
 }
 
@@ -105,21 +105,27 @@ func Finalizer(repo Repository, vars VarCache) Performer {
 }
 
 type fileWriter interface {
-	writeFile(dstPath, srcPath string) error
+	readSource(src string) error
+	writeDestination(dst string) error
 }
 
 func writeFilePaths(paths map[string]service.FilePath, srcBase string, writer fileWriter) error {
 	for srcFile, param := range paths {
 		dstPath := ReplaceEnvVars(param.Path)
 		srcPath := filepath.Join(srcBase, srcFile)
-		f := func() error { return writeFilePath(dstPath, srcPath, param.Mode, writer) }
 
-		dstDir := filepath.Dir(dstPath)
-		id, err := parentPathOwner(dstDir)
+		err := writer.readSource(srcPath)
 		if err != nil {
 			return err
 		}
-		err = RunAsUnixID(f, id)
+		owner, err := parentPathOwner(dstPath)
+		if err != nil {
+			return err
+		}
+		err = RunAsUnixID(
+			func() error { return writeFilePath(dstPath, srcPath, param.Mode, writer) },
+			owner,
+		)
 		if err != nil {
 			return err
 		}
@@ -132,7 +138,7 @@ func writeFilePath(dst, src string, mode uint16, writer fileWriter) error {
 	if err != nil {
 		return err
 	}
-	err = writer.writeFile(dst, src)
+	err = writer.writeDestination(dst)
 	if err != nil {
 		return err
 	}
@@ -147,38 +153,50 @@ func writeFilePath(dst, src string, mode uint16, writer fileWriter) error {
 
 type symlinkWriter struct {
 	log logr.Logger
+	src string
 }
 
-func (w symlinkWriter) writeFile(dstPath, srcPath string) error {
-	if _, err := os.Stat(srcPath); err != nil { // Check that srcPath exists.
+func (w *symlinkWriter) readSource(src string) error {
+	if _, err := os.Stat(src); err != nil { // Check that srcPath exists.
 		return err
 	}
-	err := os.Symlink(srcPath, dstPath)
+	w.src = src
+	return nil
+}
+
+func (w *symlinkWriter) writeDestination(dst string) error {
+	err := os.Symlink(w.src, dst)
 	if err != nil {
 		if !errors.Is(err, fs.ErrExist) {
 			return err
 		}
-		w.log.Info("Already exists", "path", dstPath)
+		w.log.Info("Already exists", "path", dst)
 	}
 	return nil
 }
 
 type copyWriter struct {
 	variables map[string]string
+	tmpl      *template.Template
 }
 
-func (w copyWriter) writeFile(dstPath, srcPath string) error {
-	tmp, err := template.ParseFiles(srcPath)
+func (w *copyWriter) readSource(src string) error {
+	tmpl, err := template.ParseFiles(src)
 	if err != nil {
 		return err
 	}
-	dstFile, err := os.Create(dstPath)
+	w.tmpl = tmpl
+	return nil
+}
+
+func (w *copyWriter) writeDestination(dst string) error {
+	dstFile, err := os.Create(dst)
 	if err != nil {
 		return err
 	}
 	defer dstFile.Close()
 	buff := bufio.NewWriter(dstFile)
-	err = tmp.Execute(buff, w.variables)
+	err = w.tmpl.Execute(buff, w.variables)
 	if err != nil {
 		return err
 	}

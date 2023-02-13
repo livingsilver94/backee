@@ -38,6 +38,6 @@ func RunAsUnixID(f func() error, id UnixID) error {
 	if err != nil {
 		return fmt.Errorf("setting UID %d: %w", id.UID, err)
 	}
-	defer syscall.Setuid(oldUID)
+	defer syscall.Seteuid(oldUID)
 	return f()
 }
