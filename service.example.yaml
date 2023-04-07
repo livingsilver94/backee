@@ -1,36 +1,36 @@
 # Example of a complete service.yaml.
 
 depends    :
-  # Suppose there is mysql/service.yaml.
-  # This will be installed first.
-  - mysql
+    # Suppose there is mysql/service.yaml.
+    # This will be installed first.
+    - mysql
 setup      : |
-  # There is nothing to set up here.
-  # As an example, let's just have a shell comment.
-  # Code inside `setup` is shell or Powershell code.
+    # There is nothing to set up here.
+    # As an example, let's just have a shell comment.
+    # Code inside `setup` is shell or Powershell code.
 pkgmanager : ["sudo", "dnf", "install", "-y"]
 packages   :
-  # These are OS packages, not services.
-  - nginx
-  - nginx-mod-mail
+    # These are OS packages, not services.
+    - nginx
+    - nginx-mod-mail
 links      :
-  # The simple representation. File mode defaults to http.conf file mode.
-  http.conf: ${XDG_CONFIG_DIRS}/nginx/conf.d/http.conf
-  # The complete representation. It allows to pass a preferred file mode.
-  ssl.conf :
-    path: ${XDG_CONFIG_DIRS}/nginx/conf.d/ssl.conf
-    mode: 0o600
+    # The simple representation. File mode defaults to http.conf file mode.
+    http.conf: ${XDG_CONFIG_DIRS}/nginx/conf.d/http.conf
+    # The complete representation. It allows to pass a preferred file mode.
+    ssl.conf :
+        path: ${XDG_CONFIG_DIRS}/nginx/conf.d/ssl.conf
+        mode: 0o600
 variables       :
-  # Cleartext variable. `kind` defaults to `cleartext` when unspecified.
-  username : administrator
-  # Complete representation. This is a secret variable stored in a database.
-  password:
-    kind: keepassxc
-    value: "/passwords/admin" # Path inside the secret database.
+    # Cleartext variable. `kind` defaults to `cleartext` when unspecified.
+    username : administrator
+    # Complete representation. This is a secret variable stored in a database.
+    password:
+        kind: keepassxc
+        value: "/passwords/admin" # Path inside the secret database.
 copies     :
-  home.html: /var/www/home.html
-  # Let's pretend this file contains templating directives for editing.
-  aboutme_debian.html: /var/www/aboutme.html
+    home.html: /var/www/home.html
+    # Let's pretend this file contains templating directives for editing.
+    aboutme_debian.html: /var/www/aboutme.html
 finalize   : |
-  echo 'Rembember that your username is {{.username}} with password {{.password}}' > /dev/stderr
-  sudo systemctl enable --now nginx.service
+    echo 'Rembember that your username is {{.username}} with password {{.password}}' > /dev/stderr
+    sudo systemctl enable --now nginx.service
