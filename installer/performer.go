@@ -96,12 +96,33 @@ func Finalizer(repo Repository, vars VarCache) Performer {
 			return err
 		}
 		var script strings.Builder
-		err = tmpl.Execute(&script, vars.GetAll(srv.Name))
+		variables := environMap()
+		mergeStringMap(variables, vars.GetAll(srv.Name))
+		err = tmpl.Execute(&script, variables)
 		if err != nil {
 			return err
 		}
 		return runScript(script.String())
 	}
+}
+
+// environMap returns a map of environment variables.
+func environMap() map[string]string {
+	env := os.Environ()
+	envMap := make(map[string]string, len(env))
+	for _, keyVal := range env {
+		key, val, _ := strings.Cut(keyVal, "=")
+		envMap[key] = val
+	}
+	return envMap
+}
+
+// mergeStringMap merges m2 into m1.
+func mergeStringMap(m1, m2 map[string]string) {
+	for k, v := range m2 {
+		m1[k] = v
+	}
+	os.Environ()
 }
 
 type fileWriter interface {
