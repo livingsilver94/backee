@@ -10,7 +10,7 @@ endif
 
 .PHONY: build
 build:
-	$(GO) build -o $(OUTPATH) -ldflags "-X main.Version=$(VERSION)" main.go
+	$(GO) build -o $(OUTPATH) -ldflags "-X github.com/livingsilver94/backee/cmd.Version=$(VERSION)" main.go
 
 .PHONY: check
 check:

@@ -1,4 +1,4 @@
-package cli
+package logger
 
 import (
 	"bufio"
@@ -11,19 +11,19 @@ import (
 	"github.com/go-logr/logr"
 )
 
-// LogLevel sets the verbosity of a logger.
-type LogLevel int
+// Level sets the verbosity of a logger.
+type Level int
 
 const (
-	// LogError is the least verbose level of a logger. It only logs errors.
-	LogError LogLevel = 1
-	// LogInfo logs information and error messages.
-	LogInfo LogLevel = 2
+	// LevelError is the least verbose level of a logger. It only logs errors.
+	LevelError Level = 1
+	// LevelInfo logs information and error messages.
+	LevelInfo Level = 2
 )
 
-// NewLogger creates a new structured logger.
+// New creates a new structured logger.
 // colored regulates whether the logger will use colored output.
-func NewLogger(level LogLevel, colored bool) logr.Logger {
+func New(level Level, colored bool) logr.Logger {
 	sink := logSink{
 		writer:  bufio.NewWriter(os.Stdout),
 		level:   level,
@@ -39,7 +39,7 @@ type logSink struct {
 	name    string
 	keyVals map[string]interface{}
 	writer  *bufio.Writer
-	level   LogLevel
+	level   Level
 	colored bool
 }
 
@@ -48,7 +48,7 @@ func (l logSink) Init(info logr.RuntimeInfo) {}
 
 // Enabled implements logr.LogSink's Enabled method.
 func (l logSink) Enabled(level int) bool {
-	return l.level >= LogLevel(level)
+	return l.level >= Level(level)
 }
 
 // Info implements logr.LogSink's Info method.
