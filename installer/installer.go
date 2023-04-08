@@ -42,6 +42,11 @@ func New(repository Repository, options ...Option) Installer {
 }
 
 func (inst *Installer) Install(services []*service.Service) bool {
+	if len(services) == 0 {
+		inst.logger.Info("The service list is empty")
+		return true
+	}
+
 	ilistFile, err := os.OpenFile(installedListFilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	var list List
 	if err != nil {
