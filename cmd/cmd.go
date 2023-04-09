@@ -28,7 +28,11 @@ type Globals struct {
 type Arguments struct {
 	Globals
 
-	Install Install `cmd:""`
+	Install Install `cmd:"" default:"withargs"`
+	// Copy is hidden and it is not meant to be called by users,
+	// instead Backee will call it in a privileged fork of itself
+	// to perform filesystem operations where admninistration rights are required.
+	Copy copy `cmd:"" hidden:""`
 }
 
 func Run() {
