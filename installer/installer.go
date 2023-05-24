@@ -24,7 +24,7 @@ const (
 
 type Installer struct {
 	repository Repository
-	varcache   VarCache
+	varcache   Variables
 	logger     logr.Logger
 	err        error
 }
@@ -32,7 +32,7 @@ type Installer struct {
 func New(repository Repository, options ...Option) Installer {
 	i := Installer{
 		repository: repository,
-		varcache:   NewVarCache(),
+		varcache:   NewVariables(),
 		logger:     logr.Discard(),
 	}
 	for _, option := range options {
@@ -126,6 +126,6 @@ func WithLogger(lg logr.Logger) Option {
 
 func WithStore(kind service.VarKind, store VarStore) Option {
 	return func(i *Installer) {
-		i.varcache.SetStore(kind, store)
+		i.varcache.RegisterStore(kind, store)
 	}
 }

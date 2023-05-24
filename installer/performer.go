@@ -54,7 +54,7 @@ func SymlinkPerformer(repo Repository) Performer {
 	}
 }
 
-func CopyPerformer(repo Repository, vars VarCache) Performer {
+func CopyPerformer(repo Repository, vars Variables) Performer {
 	return func(log logr.Logger, srv *service.Service) error {
 		if len(srv.Copies) == 0 {
 			return nil
@@ -74,7 +74,7 @@ func CopyPerformer(repo Repository, vars VarCache) Performer {
 	}
 }
 
-func Finalizer(repo Repository, vars VarCache) Performer {
+func Finalizer(repo Repository, vars Variables) Performer {
 	return func(log logr.Logger, srv *service.Service) error {
 		if srv.Finalize == nil || *srv.Finalize == "" {
 			return nil

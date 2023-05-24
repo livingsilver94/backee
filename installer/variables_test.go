@@ -8,7 +8,7 @@ import (
 )
 
 func TestInsertClear(t *testing.T) {
-	cache := installer.NewVarCache()
+	cache := installer.NewVariables()
 	cache.Insert("service1", "key", service.VarValue{Kind: service.ClearText, Value: "value"})
 	if cache.Length() != 1 {
 		t.Fatalf("expected length %d. Got %d", 1, cache.Length())
@@ -16,7 +16,7 @@ func TestInsertClear(t *testing.T) {
 }
 
 func TestInsertTwice(t *testing.T) {
-	cache := installer.NewVarCache()
+	cache := installer.NewVariables()
 	cache.Insert("service1", "key", service.VarValue{Kind: service.ClearText, Value: "value"})
 	cache.Insert("service1", "key", service.VarValue{Kind: service.ClearText, Value: "boo!"})
 	if cache.Length() != 1 {
@@ -36,8 +36,8 @@ func (testVarStore) Value(key string) (value string, err error) {
 func TestInsertStore(t *testing.T) {
 	const kind service.VarKind = "testKind"
 
-	cache := installer.NewVarCache()
-	cache.SetStore(kind, testVarStore{})
+	cache := installer.NewVariables()
+	cache.RegisterStore(kind, testVarStore{})
 	err := cache.Insert("service1", "key", service.VarValue{Kind: kind, Value: "storeValue"})
 	if err != nil {
 		t.Fatal(err)
@@ -49,7 +49,7 @@ func TestInsertStore(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
-	cache := installer.NewVarCache()
+	cache := installer.NewVariables()
 	cache.Insert("service1", "key", service.VarValue{Kind: service.ClearText, Value: "value"})
 	value, ok := cache.Get("service1", "key")
 	if !ok {

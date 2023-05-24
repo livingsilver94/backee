@@ -6,21 +6,23 @@ import (
 	"github.com/livingsilver94/backee/service"
 )
 
-type VarCache struct {
-	vars   map[string]map[string]string
+type serviceName = string
+
+type Variables struct {
+	vars   map[serviceName]map[string]string
 	stores map[service.VarKind]VarStore
 }
 
-func NewVarCache() VarCache {
-	return VarCache{
-		vars:   make(map[string]map[string]string),
+func NewVariables() Variables {
+	return Variables{
+		vars:   make(map[serviceName]map[string]string),
 		stores: make(map[service.VarKind]VarStore),
 	}
 }
 
-// Insert caches value for a service name srv under key.
+// Insert saves value for a service named srv under key.
 // If key is already present for srv, Insert is no-op.
-func (c VarCache) Insert(srv, key string, value service.VarValue) error {
+func (c Variables) Insert(srv, key string, value service.VarValue) error {
 	vars, ok := c.vars[srv]
 	if !ok {
 		c.vars[srv] = make(map[string]string)
@@ -47,7 +49,7 @@ func (c VarCache) Insert(srv, key string, value service.VarValue) error {
 	return nil
 }
 
-func (c VarCache) InsertMany(srv string, values map[string]service.VarValue) error {
+func (c Variables) InsertMany(srv string, values map[string]service.VarValue) error {
 	for key, value := range values {
 		err := c.Insert(srv, key, value)
 		if err != nil {
@@ -57,7 +59,7 @@ func (c VarCache) InsertMany(srv string, values map[string]service.VarValue) err
 	return nil
 }
 
-func (c VarCache) Get(service, key string) (string, bool) {
+func (c Variables) Get(service, key string) (string, bool) {
 	vars, ok := c.vars[service]
 	if !ok {
 		return "", false
@@ -66,14 +68,14 @@ func (c VarCache) Get(service, key string) (string, bool) {
 	return val, ok
 }
 
-func (c VarCache) Length() int {
+func (c Variables) Length() int {
 	return len(c.vars)
 }
 
-func (c VarCache) GetAll(service string) map[string]string {
+func (c Variables) GetAll(service string) map[string]string {
 	return c.vars[service]
 }
 
-func (c VarCache) SetStore(kind service.VarKind, store VarStore) {
+func (c Variables) RegisterStore(kind service.VarKind, store VarStore) {
 	c.stores[kind] = store
 }
