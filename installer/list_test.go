@@ -23,7 +23,7 @@ func TestNewList(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		list := installer.NewList(test.in)
+		list := installer.NewInstallationList(test.in)
 		if list.Size() != len(test.out) {
 			t.Fatalf("Expected list length %d. Got %d", len(test.out), list.Size())
 		}
@@ -37,7 +37,7 @@ func TestNewList(t *testing.T) {
 
 func TestListInsert(t *testing.T) {
 	someRead := bytes.NewBufferString("service1\nservice2\nservice3")
-	list := installer.NewList(someRead)
+	list := installer.NewInstallationList(someRead)
 	list.Insert("testy")
 	if !list.Contains("testy") {
 		t.Fatalf("list doesn't contain %q", "testy")

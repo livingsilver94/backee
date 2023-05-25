@@ -8,12 +8,12 @@ import (
 	"github.com/hashicorp/go-set"
 )
 
-type List struct {
+type InstallationList struct {
 	dest      io.Writer
 	installed *set.Set[string]
 }
 
-func NewList(dest io.ReadWriter) List {
+func NewInstallationList(dest io.ReadWriter) InstallationList {
 	if dest == nil {
 		dest = newDiscard()
 	}
@@ -22,22 +22,22 @@ func NewList(dest io.ReadWriter) List {
 	for scan.Scan() {
 		installed.Insert(scan.Text())
 	}
-	return List{
+	return InstallationList{
 		dest:      dest,
 		installed: installed,
 	}
 }
 
-func (il *List) Insert(name string) {
+func (il *InstallationList) Insert(name string) {
 	fmt.Fprintf(il.dest, "\n"+name)
 	il.installed.Insert(name)
 }
 
-func (il *List) Contains(name string) bool {
+func (il *InstallationList) Contains(name string) bool {
 	return il.installed.Contains(name)
 }
 
-func (il *List) Size() int {
+func (il *InstallationList) Size() int {
 	return il.installed.Size()
 }
 
