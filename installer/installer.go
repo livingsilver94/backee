@@ -48,15 +48,15 @@ func (inst *Installer) Install(services []*service.Service) bool {
 	}
 
 	ilistFile, err := os.OpenFile(installedListFilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
-	var list InstallationList
+	var list InstallList
 	if err != nil {
 		inst.logger.Error(
 			err,
 			"Continuing without populating the installation list")
-		list = NewInstallationList(nil)
+		list = NewInstallList(nil)
 	} else {
 		defer ilistFile.Close()
-		list = NewInstallationList(ilistFile)
+		list = NewInstallList(ilistFile)
 	}
 
 	for _, srv := range services {
@@ -72,7 +72,7 @@ func (inst *Installer) Error() error {
 	return inst.err
 }
 
-func (inst *Installer) installHierarchy(srv *service.Service, list *InstallationList) bool {
+func (inst *Installer) installHierarchy(srv *service.Service, list *InstallList) bool {
 	depGraph, err := inst.repository.ResolveDeps(srv)
 	if err != nil {
 		return inst.setError(err)
@@ -87,7 +87,7 @@ func (inst *Installer) installHierarchy(srv *service.Service, list *Installation
 	return inst.installSingle(srv, list)
 }
 
-func (inst *Installer) installSingle(srv *service.Service, ilist *InstallationList) bool {
+func (inst *Installer) installSingle(srv *service.Service, ilist *InstallList) bool {
 	log := inst.logger.WithName(srv.Name)
 	if ilist.Contains(srv.Name) {
 		log.Info("Already installed")
