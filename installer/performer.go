@@ -4,16 +4,17 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"text/template"
 
 	"github.com/go-logr/logr"
 	"github.com/livingsilver94/backee/service"
+	"github.com/valyala/fasttemplate"
 )
 
 type Performer func(logr.Logger, *service.Service) error
@@ -86,25 +87,6 @@ func Finalizer(repo Repository, vars map[string]string) Performer {
 		}
 		return runScript(script.String())
 	}
-}
-
-// environMap returns a map of environment variables.
-func environMap() map[string]string {
-	env := os.Environ()
-	envMap := make(map[string]string, len(env))
-	for _, keyVal := range env {
-		key, val, _ := strings.Cut(keyVal, "=")
-		envMap[key] = val
-	}
-	return envMap
-}
-
-// mergeStringMap merges m2 into m1.
-func mergeStringMap(m1, m2 map[string]string) {
-	for k, v := range m2 {
-		m1[k] = v
-	}
-	os.Environ()
 }
 
 type fileWriter interface {
@@ -206,27 +188,6 @@ func (w *copyWriter) writeDestination(dst string) error {
 	return buff.Flush()
 }
 
-const (
-	envVarPrefix  = "${"
-	envVarPattern = "[a-zA-Z_]\\w+"
-	envVarSuffix  = "}"
-)
-
-var envVarRegex *regexp.Regexp
-
-func init() {
-	envVarRegex = regexp.MustCompile(regexp.QuoteMeta(envVarPrefix) + envVarPattern + regexp.QuoteMeta(envVarSuffix))
-}
-
-func ReplaceEnvVars(src string) string {
-	replacer := func(match string) string {
-		varName := strings.TrimPrefix(match, envVarPrefix)
-		varName = strings.TrimSuffix(varName, envVarSuffix)
-		return os.Getenv(varName)
-	}
-	return envVarRegex.ReplaceAllStringFunc(src, replacer)
-}
-
 func runProcess(name string, arg ...string) error {
 	cmd := exec.Command(name, arg...)
 	cmd.Stdout = nil
@@ -258,4 +219,43 @@ func parentPathOwner(path string) (UnixID, error) {
 		}
 		return id, nil
 	}
+}
+
+func varReplacerFunc(srv *service.Service, vars Variables, env map[string]string) fasttemplate.TagFunc {
+	return func(w io.Writer, tag string) (int, error) {
+		if val, ok := vars.Get(srv.Name, tag); ok {
+			// Matched a variable local to the service.
+			return w.Write([]byte(val))
+		}
+		if val, ok := env[tag]; ok {
+			// Matched an environment variable.
+			return w.Write([]byte(val))
+		}
+		parentName, varName, found := strings.Cut(tag, ".")
+		if !found {
+			return 0, nil
+		}
+		for _, parent := range srv.Depends.List() {
+			if parent != parentName {
+				continue
+			}
+			if val, ok := vars.Get(parent, varName); ok {
+				// Matched a parent service variable.
+				return w.Write([]byte(val))
+			}
+			break
+		}
+		return 0, nil
+	}
+}
+
+// environMap returns a map of environment variables.
+func environMap() map[string]string {
+	env := os.Environ()
+	envMap := make(map[string]string, len(env))
+	for _, keyVal := range env {
+		key, val, _ := strings.Cut(keyVal, "=")
+		envMap[key] = val
+	}
+	return envMap
 }
