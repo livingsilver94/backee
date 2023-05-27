@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"io"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -14,7 +13,6 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/livingsilver94/backee/service"
-	"github.com/valyala/fasttemplate"
 )
 
 type Performer func(logr.Logger, *service.Service) error
@@ -219,43 +217,4 @@ func parentPathOwner(path string) (UnixID, error) {
 		}
 		return id, nil
 	}
-}
-
-func varReplacerFunc(srv *service.Service, vars Variables, env map[string]string) fasttemplate.TagFunc {
-	return func(w io.Writer, tag string) (int, error) {
-		if val, ok := vars.Get(srv.Name, tag); ok {
-			// Matched a variable local to the service.
-			return w.Write([]byte(val))
-		}
-		if val, ok := env[tag]; ok {
-			// Matched an environment variable.
-			return w.Write([]byte(val))
-		}
-		parentName, varName, found := strings.Cut(tag, ".")
-		if !found {
-			return 0, nil
-		}
-		for _, parent := range srv.Depends.List() {
-			if parent != parentName {
-				continue
-			}
-			if val, ok := vars.Get(parent, varName); ok {
-				// Matched a parent service variable.
-				return w.Write([]byte(val))
-			}
-			break
-		}
-		return 0, nil
-	}
-}
-
-// environMap returns a map of environment variables.
-func environMap() map[string]string {
-	env := os.Environ()
-	envMap := make(map[string]string, len(env))
-	for _, keyVal := range env {
-		key, val, _ := strings.Cut(keyVal, "=")
-		envMap[key] = val
-	}
-	return envMap
 }

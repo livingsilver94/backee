@@ -4,6 +4,6 @@ import (
 	"testing"
 )
 
-func TestReplaceTemplateVars(t *testing.T) {
+func TestTemplateExectute(t *testing.T) {
 
 }
