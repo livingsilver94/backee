@@ -54,51 +54,33 @@ func SymlinkPerformer(repo Repository) Performer {
 	}
 }
 
-func CopyPerformer(repo Repository, vars Variables) Performer {
+func CopyPerformer(repo Repository, vars map[string]string) Performer {
 	return func(log logr.Logger, srv *service.Service) error {
 		if len(srv.Copies) == 0 {
 			return nil
 		}
 		log.Info("Copying files")
-		err := vars.InsertMany(srv.Name, srv.Variables)
-		if err != nil {
-			return err
-		}
 		dataDir, err := repo.DataDir(srv.Name)
 		if err != nil {
 			return err
 		}
-		vars.Insert(srv.Name, service.VarDatadir, service.VarValue{Kind: service.ClearText, Value: dataDir})
-		wr := copyWriter{variables: vars.GetAll(srv.Name)}
+		wr := copyWriter{variables: vars}
 		return writeFilePaths(srv.Copies, dataDir, &wr)
 	}
 }
 
-func Finalizer(repo Repository, vars Variables) Performer {
+func Finalizer(repo Repository, vars map[string]string) Performer {
 	return func(log logr.Logger, srv *service.Service) error {
 		if srv.Finalize == nil || *srv.Finalize == "" {
 			return nil
 		}
 		log.Info("Running finalizer script")
-		err := vars.InsertMany(srv.Name, srv.Variables)
-		if err != nil {
-			return err
-		}
-		if _, ok := vars.Get(srv.Name, service.VarDatadir); !ok {
-			datadir, err := repo.DataDir(srv.Name)
-			if err != nil {
-				return err
-			}
-			vars.Insert(srv.Name, service.VarDatadir, service.VarValue{Kind: service.ClearText, Value: datadir})
-		}
 		tmpl, err := template.New("finalizer").Parse(*srv.Finalize)
 		if err != nil {
 			return err
 		}
 		var script strings.Builder
-		variables := environMap()
-		mergeStringMap(variables, vars.GetAll(srv.Name))
-		err = tmpl.Execute(&script, variables)
+		err = tmpl.Execute(&script, vars)
 		if err != nil {
 			return err
 		}

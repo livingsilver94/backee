@@ -93,12 +93,16 @@ func (inst *Installer) installSingle(srv *service.Service, ilist *InstallationLi
 		log.Info("Already installed")
 		return inst.setError(nil)
 	}
+	err := inst.cacheVars(srv)
+	if err != nil {
+		return inst.setError(err)
+	}
 	performers := []Performer{
 		Setup,
 		PackageInstaller,
 		SymlinkPerformer(inst.repository),
-		CopyPerformer(inst.repository, inst.varcache),
-		Finalizer(inst.repository, inst.varcache),
+		CopyPerformer(inst.repository, inst.varcache.GetAll(srv.Name)),
+		Finalizer(inst.repository, inst.varcache.GetAll(srv.Name)),
 	}
 	for _, perf := range performers {
 		err := perf(log, srv)
@@ -109,6 +113,21 @@ func (inst *Installer) installSingle(srv *service.Service, ilist *InstallationLi
 	}
 	ilist.Insert(srv.Name)
 	return inst.setError(nil)
+}
+
+func (inst *Installer) cacheVars(srv *service.Service) error {
+	datadir, err := inst.repository.DataDir(srv.Name)
+	if err != nil {
+		return err
+	}
+	err = inst.varcache.Insert(
+		srv.Name,
+		service.VarDatadir,
+		service.VarValue{Kind: service.ClearText, Value: datadir})
+	if err != nil {
+		return err
+	}
+	return inst.varcache.InsertMany(srv.Name, srv.Variables)
 }
 
 func (inst *Installer) setError(err error) bool {
