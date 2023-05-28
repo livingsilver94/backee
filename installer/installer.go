@@ -97,12 +97,13 @@ func (inst *Installer) installSingle(srv *service.Service, ilist *InstallList) b
 	if err != nil {
 		return inst.setError(err)
 	}
+	tmpl := NewTemplate(srv, inst.varcache)
 	performers := []Performer{
 		Setup,
 		PackageInstaller,
-		SymlinkPerformer(inst.repository),
-		CopyPerformer(inst.repository, inst.varcache.GetAll(srv.Name)),
-		Finalizer(inst.repository, inst.varcache.GetAll(srv.Name)),
+		SymlinkPerformer(inst.repository, tmpl),
+		CopyPerformer(inst.repository, tmpl),
+		Finalizer(tmpl),
 	}
 	for _, perf := range performers {
 		err := perf(log, srv)

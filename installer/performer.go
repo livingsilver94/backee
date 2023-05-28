@@ -9,7 +9,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"text/template"
 
 	"github.com/go-logr/logr"
 	"github.com/livingsilver94/backee/service"
@@ -38,7 +37,7 @@ var (
 	}
 )
 
-func SymlinkPerformer(repo Repository) Performer {
+func SymlinkPerformer(repo Repository, tmpl Template) Performer {
 	return func(log logr.Logger, srv *service.Service) error {
 		if len(srv.Links) == 0 {
 			return nil
@@ -48,12 +47,11 @@ func SymlinkPerformer(repo Repository) Performer {
 		if err != nil {
 			return err
 		}
-		wr := symlinkWriter{log: log}
-		return writeFilePaths(srv.Links, linkDir, &wr)
+		return writeFiles(srv.Links, linkDir, tmpl, newSymlinkWriter(log))
 	}
 }
 
-func CopyPerformer(repo Repository, vars map[string]string) Performer {
+func CopyPerformer(repo Repository, tmpl Template) Performer {
 	return func(log logr.Logger, srv *service.Service) error {
 		if len(srv.Copies) == 0 {
 			return nil
@@ -63,23 +61,56 @@ func CopyPerformer(repo Repository, vars map[string]string) Performer {
 		if err != nil {
 			return err
 		}
-		wr := copyWriter{variables: vars}
-		return writeFilePaths(srv.Copies, dataDir, &wr)
+		return writeFiles(srv.Copies, dataDir, tmpl, newCopyWriter(tmpl))
 	}
 }
 
-func Finalizer(repo Repository, vars map[string]string) Performer {
+func writeFiles(files map[string]service.FilePath, baseDir string, tmpl Template, wr fileWriter) error {
+	var dstBuf strings.Builder
+	for src, dst := range files {
+		err := tmpl.Execute(dst.Path, &dstBuf)
+		if err != nil {
+			return err
+		}
+		err = writeFile(service.FilePath{Path: dstBuf.String(), Mode: dst.Mode}, filepath.Join(baseDir, src), wr)
+		if err != nil {
+			if !errors.Is(err, fs.ErrPermission) {
+				return err
+			}
+			// TODO: retry with privileged permissions.
+		}
+		dstBuf.Reset()
+	}
+	return nil
+}
+
+func writeFile(dst service.FilePath, src string, wr fileWriter) error {
+	err := wr.loadSource(src)
+	if err != nil {
+		return err
+	}
+	err = os.MkdirAll(filepath.Dir(dst.Path), 0755)
+	if err != nil {
+		return err
+	}
+	err = wr.writeDestination(dst.Path)
+	if err != nil {
+		return err
+	}
+	if dst.Mode != 0 {
+		return os.Chmod(dst.Path, fs.FileMode(dst.Mode))
+	}
+	return nil
+}
+
+func Finalizer(tmpl Template) Performer {
 	return func(log logr.Logger, srv *service.Service) error {
 		if srv.Finalize == nil || *srv.Finalize == "" {
 			return nil
 		}
 		log.Info("Running finalizer script")
-		tmpl, err := template.New("finalizer").Parse(*srv.Finalize)
-		if err != nil {
-			return err
-		}
 		var script strings.Builder
-		err = tmpl.Execute(&script, vars)
+		err := tmpl.Execute(*srv.Finalize, &script)
 		if err != nil {
 			return err
 		}
@@ -88,58 +119,23 @@ func Finalizer(repo Repository, vars map[string]string) Performer {
 }
 
 type fileWriter interface {
-	readSource(src string) error
+	loadSource(src string) error
 	writeDestination(dst string) error
-}
-
-func writeFilePaths(paths map[string]service.FilePath, srcBase string, writer fileWriter) error {
-	for srcFile, param := range paths {
-		dstPath := ReplaceEnvVars(param.Path)
-		srcPath := filepath.Join(srcBase, srcFile)
-
-		err := writer.readSource(srcPath)
-		if err != nil {
-			return err
-		}
-		owner, err := parentPathOwner(dstPath)
-		if err != nil {
-			return err
-		}
-		err = RunAsUnixID(
-			func() error { return writeFilePath(dstPath, srcPath, param.Mode, writer) },
-			owner,
-		)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func writeFilePath(dst, src string, mode uint16, writer fileWriter) error {
-	err := os.MkdirAll(filepath.Dir(dst), 0755)
-	if err != nil {
-		return err
-	}
-	err = writer.writeDestination(dst)
-	if err != nil {
-		return err
-	}
-	if mode != 0 {
-		err := os.Chmod(dst, fs.FileMode(mode))
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 type symlinkWriter struct {
 	log logr.Logger
+
 	src string
 }
 
-func (w *symlinkWriter) readSource(src string) error {
+func newSymlinkWriter(log logr.Logger) *symlinkWriter {
+	return &symlinkWriter{
+		log: log,
+	}
+}
+
+func (w *symlinkWriter) loadSource(src string) error {
 	if _, err := os.Stat(src); err != nil { // Check that srcPath exists.
 		return err
 	}
@@ -159,17 +155,21 @@ func (w *symlinkWriter) writeDestination(dst string) error {
 }
 
 type copyWriter struct {
-	variables map[string]string
-	tmpl      *template.Template
+	tmpl Template
+
+	srcContent string
 }
 
-func (w *copyWriter) readSource(src string) error {
-	tmpl, err := template.ParseFiles(src)
-	if err != nil {
-		return err
+func newCopyWriter(tmpl Template) *copyWriter {
+	return &copyWriter{
+		tmpl: tmpl,
 	}
-	w.tmpl = tmpl
-	return nil
+}
+
+func (w *copyWriter) loadSource(src string) error {
+	content, err := os.ReadFile(src)
+	w.srcContent = string(content)
+	return err
 }
 
 func (w *copyWriter) writeDestination(dst string) error {
@@ -179,7 +179,7 @@ func (w *copyWriter) writeDestination(dst string) error {
 	}
 	defer dstFile.Close()
 	buff := bufio.NewWriter(dstFile)
-	err = w.tmpl.Execute(buff, w.variables)
+	err = w.tmpl.Execute(w.srcContent, buff)
 	if err != nil {
 		return err
 	}
