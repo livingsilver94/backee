@@ -1,34 +1,40 @@
 package installer
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/livingsilver94/backee/service"
 )
 
+var (
+	ErrNoService  = errors.New("service not found")
+	ErrNoVariable = errors.New("variable not found")
+)
+
 type serviceName = string
 
 type Variables struct {
-	vars   map[serviceName]map[string]string
+	cache  map[serviceName]value
 	stores map[service.VarKind]VarStore
 }
 
 func NewVariables() Variables {
 	return Variables{
-		vars:   make(map[serviceName]map[string]string),
+		cache:  make(map[serviceName]value),
 		stores: make(map[service.VarKind]VarStore),
 	}
 }
 
 // Insert saves value for a service named srv under key.
+// If the value is not clear text, it is resolved immediately and then cached.
 // If key is already present for srv, Insert is no-op.
 func (c Variables) Insert(srv, key string, value service.VarValue) error {
-	vars, ok := c.vars[srv]
-	if !ok {
-		c.vars[srv] = make(map[string]string)
-		vars = c.vars[srv]
-	}
-	if _, ok := c.Get(srv, key); ok {
+	switch _, err := c.Get(srv, key); err {
+	case ErrNoService:
+		c.cache[srv] = newValue()
+	case ErrNoVariable:
+	default:
 		return nil
 	}
 	var v string
@@ -45,7 +51,7 @@ func (c Variables) Insert(srv, key string, value service.VarValue) error {
 			return err
 		}
 	}
-	vars[key] = v
+	c.cache[srv].vars[key] = v
 	return nil
 }
 
@@ -59,23 +65,38 @@ func (c Variables) InsertMany(srv string, values map[string]service.VarValue) er
 	return nil
 }
 
-func (c Variables) Get(service, key string) (string, bool) {
-	vars, ok := c.vars[service]
+func (c Variables) Get(service, key string) (string, error) {
+	val, ok := c.cache[service]
 	if !ok {
-		return "", false
+		return "", ErrNoService
 	}
-	val, ok := vars[key]
-	return val, ok
+	variable, ok := val.vars[key]
+	if !ok {
+		return "", ErrNoVariable
+	}
+	return variable, nil
 }
 
 func (c Variables) Length() int {
-	return len(c.vars)
+	return len(c.cache)
 }
 
 func (c Variables) GetAll(service string) map[string]string {
-	return c.vars[service]
+	return c.cache[service].vars
 }
 
 func (c Variables) RegisterStore(kind service.VarKind, store VarStore) {
 	c.stores[kind] = store
+}
+
+type value struct {
+	parents []serviceName
+	vars    map[string]string
+}
+
+func newValue() value {
+	return value{
+		parents: make([]string, 0),
+		vars:    make(map[string]string),
+	}
 }

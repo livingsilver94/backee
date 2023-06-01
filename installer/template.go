@@ -42,7 +42,7 @@ func (t Template) Execute(s string, w io.Writer) error {
 
 func (t Template) varReplacerFunc() fasttemplate.TagFunc {
 	return func(w io.Writer, tag string) (int, error) {
-		if val, ok := t.vars.Get(t.srv.Name, tag); ok {
+		if val, ok := t.vars.Get(t.srv.Name, tag); ok == nil {
 			// Matched a variable local to the service.
 			return w.Write([]byte(val))
 		}
@@ -58,7 +58,7 @@ func (t Template) varReplacerFunc() fasttemplate.TagFunc {
 			if parent != parentName {
 				continue
 			}
-			if val, ok := t.vars.Get(parent, varName); ok {
+			if val, ok := t.vars.Get(parent, varName); ok == nil {
 				// Matched a parent service variable.
 				return w.Write([]byte(val))
 			}

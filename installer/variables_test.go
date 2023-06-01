@@ -52,8 +52,8 @@ func TestGet(t *testing.T) {
 	cache := installer.NewVariables()
 	cache.Insert("service1", "key", service.VarValue{Kind: service.ClearText, Value: "value"})
 	value, ok := cache.Get("service1", "key")
-	if !ok {
-		t.Fatalf("OK value should be true")
+	if ok != nil {
+		t.Fatalf("OK value should be nil")
 	}
 	if value != "value" {
 		t.Fatalf("expected value %q. Got %q", "value", value)
