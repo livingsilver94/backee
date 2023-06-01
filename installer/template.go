@@ -2,7 +2,6 @@ package installer
 
 import (
 	"io"
-	"os"
 	"strings"
 
 	"github.com/livingsilver94/backee/service"
@@ -16,14 +15,11 @@ const (
 
 var (
 	tmpl fasttemplate.Template
-	env  map[string]string
 )
 
-func init() {
-	env = environMap()
-}
-
 type Template struct {
+	ExtraVars map[string]string
+
 	srv  *service.Service
 	vars Variables
 }
@@ -50,7 +46,7 @@ func (t Template) varReplacerFunc() fasttemplate.TagFunc {
 			// Matched a variable local to the service.
 			return w.Write([]byte(val))
 		}
-		if val, ok := env[tag]; ok {
+		if val, ok := t.ExtraVars[tag]; ok {
 			// Matched an environment variable.
 			return w.Write([]byte(val))
 		}
@@ -58,7 +54,7 @@ func (t Template) varReplacerFunc() fasttemplate.TagFunc {
 		if !found {
 			return 0, nil
 		}
-		for _, parent := range t.srv.Depends.List() {
+		for _, parent := range t.srv.Depends.Slice() {
 			if parent != parentName {
 				continue
 			}
@@ -70,15 +66,4 @@ func (t Template) varReplacerFunc() fasttemplate.TagFunc {
 		}
 		return 0, nil
 	}
-}
-
-// environMap returns a map of environment variables.
-func environMap() map[string]string {
-	env := os.Environ()
-	envMap := make(map[string]string, len(env))
-	for _, keyVal := range env {
-		key, val, _ := strings.Cut(keyVal, "=")
-		envMap[key] = val
-	}
-	return envMap
 }

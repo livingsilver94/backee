@@ -2,6 +2,7 @@ package installer
 
 import (
 	"os"
+	"strings"
 
 	"github.com/go-logr/logr"
 	"github.com/livingsilver94/backee/repo"
@@ -98,6 +99,7 @@ func (inst *Installer) installSingle(srv *service.Service, ilist *InstallList) b
 		return inst.setError(err)
 	}
 	tmpl := NewTemplate(srv, inst.varcache)
+	tmpl.ExtraVars = environMap()
 	performers := []Performer{
 		Setup,
 		PackageInstaller,
@@ -148,4 +150,15 @@ func WithStore(kind service.VarKind, store VarStore) Option {
 	return func(i *Installer) {
 		i.varcache.RegisterStore(kind, store)
 	}
+}
+
+// environMap returns a map of environment variables.
+func environMap() map[string]string {
+	env := os.Environ()
+	envMap := make(map[string]string, len(env))
+	for _, keyVal := range env {
+		key, val, _ := strings.Cut(keyVal, "=")
+		envMap[key] = val
+	}
+	return envMap
 }
