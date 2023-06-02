@@ -1,6 +1,7 @@
 package installer_test
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/livingsilver94/backee/installer"
@@ -8,21 +9,18 @@ import (
 )
 
 func TestInsertClear(t *testing.T) {
-	cache := installer.NewVariables()
-	cache.Insert("service1", "key", service.VarValue{Kind: service.ClearText, Value: "value"})
+	cache := createVariables("key", "val")
 	if cache.Length() != 1 {
 		t.Fatalf("expected length %d. Got %d", 1, cache.Length())
 	}
 }
 
 func TestInsertTwice(t *testing.T) {
-	cache := installer.NewVariables()
-	cache.Insert("service1", "key", service.VarValue{Kind: service.ClearText, Value: "value"})
-	cache.Insert("service1", "key", service.VarValue{Kind: service.ClearText, Value: "boo!"})
+	cache := createVariables("key", "value", "key", "boo!")
 	if cache.Length() != 1 {
 		t.Fatalf("expected length %d. Got %d", 1, cache.Length())
 	}
-	if val, _ := cache.Get("service1", "key"); val != "value" {
+	if val, _ := cache.Get(serviceName, "key"); val != "value" {
 		t.Fatalf("expected value  %q. Got %q", "value", val)
 	}
 }
@@ -38,24 +36,52 @@ func TestInsertStore(t *testing.T) {
 
 	cache := installer.NewVariables()
 	cache.RegisterStore(kind, testVarStore{})
-	err := cache.Insert("service1", "key", service.VarValue{Kind: kind, Value: "storeValue"})
+	err := cache.Insert(serviceName, "key", service.VarValue{Kind: kind, Value: "storeValue"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	v, _ := cache.Get("service1", "key")
+	v, _ := cache.Get(serviceName, "key")
 	if v != "testystoreValue" {
 		t.Fatalf("expected value %q. Got %q", "testystoreValue", v)
 	}
 }
 
 func TestGet(t *testing.T) {
-	cache := installer.NewVariables()
-	cache.Insert("service1", "key", service.VarValue{Kind: service.ClearText, Value: "value"})
-	value, ok := cache.Get("service1", "key")
+	cache := createVariables("key", "value")
+	value, ok := cache.Get(serviceName, "key")
 	if ok != nil {
 		t.Fatalf("OK value should be nil")
 	}
 	if value != "value" {
 		t.Fatalf("expected value %q. Got %q", "value", value)
 	}
+}
+
+func TestGetNoService(t *testing.T) {
+	cache := installer.NewVariables()
+	_, err := cache.Get(serviceName, "key")
+	if !errors.Is(err, installer.ErrNoService) {
+		t.Fatalf("expected error %v. Got %v", installer.ErrNoService, err)
+	}
+}
+
+func TestGetNoVariable(t *testing.T) {
+	cache := createVariables("key", "value")
+	_, err := cache.Get(serviceName, "absent key")
+	if !errors.Is(err, installer.ErrNoVariable) {
+		t.Fatalf("expected error %v. Got %v", installer.ErrNoVariable, err)
+	}
+}
+
+const serviceName = "service1"
+
+func createVariables(keyVal ...string) installer.Variables {
+	if len(keyVal)%2 != 0 {
+		panic("keys and values must be pairs")
+	}
+	v := installer.NewVariables()
+	for i := 0; i < len(keyVal)-1; i += 2 {
+		v.Insert(serviceName, keyVal[i], service.VarValue{Kind: service.ClearText, Value: keyVal[i+1]})
+	}
+	return v
 }
