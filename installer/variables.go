@@ -26,6 +26,23 @@ func NewVariables() Variables {
 	}
 }
 
+// AddParent adds parent to the parents of srv.
+// That hints the two services are tied together and it may be useful to
+// Get parent's variables as well when Getting srv's variables.
+// AddParent returns ErrNoService if srv or parent does not exist.
+func (c Variables) AddParent(srv, parent string) error {
+	val, ok := c.cache[srv]
+	if !ok {
+		return ErrNoService
+	}
+	if _, ok := c.cache[parent]; !ok {
+		return ErrNoService
+	}
+	val.parents = append(val.parents, parent)
+	c.cache[srv] = val
+	return nil
+}
+
 // Insert saves value for a service named srv under key.
 // If the value is not clear text, it is resolved immediately and then cached.
 // If key is already present for srv, Insert is no-op.
@@ -63,6 +80,16 @@ func (c Variables) InsertMany(srv string, values map[string]service.VarValue) er
 		}
 	}
 	return nil
+}
+
+// Parents returns the parent list of srv.
+// If srv does not exist, ErrNoService is returned.
+func (c Variables) Parents(srv string) ([]string, error) {
+	val, ok := c.cache[srv]
+	if !ok {
+		return nil, ErrNoService
+	}
+	return val.parents, nil
 }
 
 func (c Variables) Get(service, key string) (string, error) {
