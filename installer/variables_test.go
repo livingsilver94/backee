@@ -2,11 +2,39 @@ package installer_test
 
 import (
 	"errors"
+	"reflect"
 	"testing"
 
 	"github.com/livingsilver94/backee/installer"
 	"github.com/livingsilver94/backee/service"
 )
+
+func TestAddParent(t *testing.T) {
+	cache := createVariables("key", "val")
+	cache.Insert("parent", "parentKey", service.VarValue{Kind: service.ClearText, Value: "parentValue"})
+	err := cache.AddParent(serviceName, "parent")
+	if err != nil {
+		t.Fatalf("expected nil error. Got %v", err)
+	}
+}
+
+func TestAddParentNoService(t *testing.T) {
+	cache := createVariables("key", "val")
+	cache.Insert("parent", "parentKey", service.VarValue{Kind: service.ClearText, Value: "parentValue"})
+	err := cache.AddParent("not a service", "parent")
+	if !errors.Is(err, installer.ErrNoService) {
+		t.Fatalf("expected %v error. Got %v", installer.ErrNoService, err)
+	}
+}
+
+func TestAddParentNoParent(t *testing.T) {
+	cache := createVariables("key", "val")
+	cache.Insert("parent", "parentKey", service.VarValue{Kind: service.ClearText, Value: "parentValue"})
+	err := cache.AddParent(serviceName, "not a parent")
+	if !errors.Is(err, installer.ErrNoService) {
+		t.Fatalf("expected %v error. Got %v", installer.ErrNoService, err)
+	}
+}
 
 func TestInsertClear(t *testing.T) {
 	cache := createVariables("key", "val")
@@ -70,6 +98,23 @@ func TestGetNoVariable(t *testing.T) {
 	_, err := cache.Get(serviceName, "absent key")
 	if !errors.Is(err, installer.ErrNoVariable) {
 		t.Fatalf("expected error %v. Got %v", installer.ErrNoVariable, err)
+	}
+}
+
+func TestParents(t *testing.T) {
+	cache := createVariables("key", "val")
+	cache.Insert("parent", "parentKey", service.VarValue{Kind: service.ClearText, Value: "parentValue"})
+	err := cache.AddParent(serviceName, "parent")
+	if err != nil {
+		t.Fatalf("expected nil error. Got %v", err)
+	}
+	obtained, err := cache.Parents(serviceName)
+	if err != nil {
+		t.Fatalf("expected nil error. Got %v", err)
+	}
+	expected := []string{"parent"}
+	if !reflect.DeepEqual(obtained, expected) {
+		t.Fatalf("expected parent list %v. Got %v", expected, obtained)
 	}
 }
 
