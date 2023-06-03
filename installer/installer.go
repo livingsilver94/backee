@@ -98,7 +98,7 @@ func (inst *Installer) installSingle(srv *service.Service, ilist *InstallList) b
 	if err != nil {
 		return inst.setError(err)
 	}
-	tmpl := NewTemplate(srv, inst.varcache)
+	tmpl := NewTemplate(srv.Name, inst.varcache)
 	tmpl.ExtraVars = environMap()
 	performers := []Performer{
 		Setup,

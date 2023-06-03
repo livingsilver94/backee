@@ -4,7 +4,6 @@ import (
 	"io"
 	"strings"
 
-	"github.com/livingsilver94/backee/service"
 	"github.com/valyala/fasttemplate"
 )
 
@@ -20,11 +19,11 @@ var (
 type Template struct {
 	ExtraVars map[string]string
 
-	srv  *service.Service
+	srv  string
 	vars Variables
 }
 
-func NewTemplate(srv *service.Service, vars Variables) Template {
+func NewTemplate(srv string, vars Variables) Template {
 	return Template{
 		srv:  srv,
 		vars: vars,
@@ -42,7 +41,7 @@ func (t Template) Execute(s string, w io.Writer) error {
 
 func (t Template) varReplacerFunc() fasttemplate.TagFunc {
 	return func(w io.Writer, tag string) (int, error) {
-		if val, ok := t.vars.Get(t.srv.Name, tag); ok == nil {
+		if val, ok := t.vars.Get(t.srv, tag); ok == nil {
 			// Matched a variable local to the service.
 			return w.Write([]byte(val))
 		}
@@ -54,7 +53,8 @@ func (t Template) varReplacerFunc() fasttemplate.TagFunc {
 		if !found {
 			return 0, nil
 		}
-		for _, parent := range t.srv.Depends.Slice() {
+		parents, _ := t.vars.Parents(t.srv)
+		for _, parent := range parents {
 			if parent != parentName {
 				continue
 			}
