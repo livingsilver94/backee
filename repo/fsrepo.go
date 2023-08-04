@@ -17,11 +17,13 @@ const (
 	fsRepoFilenameSuffix = ".yaml"
 )
 
+// FSRepo is a service repository based on a filesystem.
 type FSRepo struct {
 	baseFS  fs.FS
 	variant string
 }
 
+// NewFSRepo creates a new FSRepo from an existing filesystem.
 func NewFSRepo(baseFS fs.FS) FSRepo {
 	return FSRepo{
 		baseFS:  baseFS,
@@ -29,6 +31,8 @@ func NewFSRepo(baseFS fs.FS) FSRepo {
 	}
 }
 
+// NewFSRepoVariant creates a new FSRepo from an existing filesystem.
+// The new FSRepo will return services for the given system variant.
 func NewFSRepoVariant(baseFS fs.FS, variant string) FSRepo {
 	return FSRepo{
 		baseFS:  baseFS,
@@ -36,6 +40,7 @@ func NewFSRepoVariant(baseFS fs.FS, variant string) FSRepo {
 	}
 }
 
+// Service returns the service with the name provided.
 func (repo FSRepo) Service(name string) (*service.Service, error) {
 	var fname string
 	if repo.variant != "" {
@@ -51,6 +56,7 @@ func (repo FSRepo) Service(name string) (*service.Service, error) {
 	return service.NewFromYAMLReader(name, file)
 }
 
+// AllServices returns all services in the filesystem.
 func (repo FSRepo) AllServices() ([]*service.Service, error) {
 	children, err := fs.ReadDir(repo.baseFS, ".")
 	if err != nil {
@@ -75,6 +81,8 @@ func (repo FSRepo) AllServices() ([]*service.Service, error) {
 
 const depGraphDefaultDepth = 4
 
+// ResolveDeps resolves the dependency graph for srv.
+// If srv has no dependencies, the dependency graph will be empty.
 func (repo FSRepo) ResolveDeps(srv *service.Service) (DepGraph, error) {
 	graph := NewDepGraph(depGraphDefaultDepth)
 	if srv.Depends == nil {
@@ -83,6 +91,8 @@ func (repo FSRepo) ResolveDeps(srv *service.Service) (DepGraph, error) {
 	return graph, repo.resolveDeps(&graph, 0, srv.Depends)
 }
 
+// DataDir returns the data directory path for a hypothetical service.
+// There is no guarantee that the path exists.
 func (repo FSRepo) DataDir(name string) (string, error) {
 	switch typ := repo.baseFS.(type) {
 	case OSFS:
@@ -93,6 +103,8 @@ func (repo FSRepo) DataDir(name string) (string, error) {
 	}
 }
 
+// DataDir returns the link directory path for a hypothetical service.
+// There is no guarantee that the path exists.
 func (repo FSRepo) LinkDir(name string) (string, error) {
 	switch typ := repo.baseFS.(type) {
 	case OSFS:
@@ -121,7 +133,7 @@ func (repo FSRepo) resolveDeps(graph *DepGraph, level int, deps *service.DepSet)
 		if subdep.Depends == nil {
 			continue
 		}
-		subdeps.InsertAll(subdep.Depends.Slice())
+		subdeps.InsertSlice(subdep.Depends.Slice())
 	}
 	return repo.resolveDeps(graph, level+1, &subdeps)
 }
@@ -137,6 +149,7 @@ type OSFS struct {
 	path string
 }
 
+// NewOSFS returns a new OSFS based on path.
 func NewOSFS(path string) OSFS {
 	return OSFS{
 		StatFS: os.DirFS(path).(fs.StatFS),
