@@ -28,8 +28,8 @@ func TestTemplateNoVar(t *testing.T) {
 	tmpl := installer.NewTemplate(serviceName, vars)
 
 	_, err := tmpl.ExecuteString("{{thisKey}} is not among variables")
-	if !errors.Is(err, installer.ErrNoTag) {
-		t.Fatalf("expected %v. Got %v", installer.ErrNoTag, err)
+	if !errors.Is(err, installer.ErrNoVariable) {
+		t.Fatalf("expected %v. Got %v", installer.ErrNoVariable, err)
 	}
 }
 
