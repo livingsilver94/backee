@@ -52,7 +52,7 @@ func (t Template) ExecuteString(s string) (string, error) {
 
 func (t Template) varReplacerFunc() fasttemplate.TagFunc {
 	return func(w io.Writer, tag string) (int, error) {
-		if val, ok := t.vars.Get(t.srv, tag); ok == nil {
+		if val, err := t.vars.Get(t.srv, tag); err == nil {
 			// Matched a variable local to the service.
 			return w.Write([]byte(val))
 		}

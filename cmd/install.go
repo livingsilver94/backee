@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"errors"
 	"os"
 
 	"github.com/go-logr/logr"
@@ -45,9 +44,11 @@ func (in *Install) Run(logger *logr.Logger) error {
 	}
 	opts = append(opts, installer.WithLogger(*logger))
 	ins := installer.New(rep, opts...)
-	if !ins.Install(srv) {
-		// The installer already logged the error.
-		return errors.New("")
+	for _, s := range srv {
+		err := ins.Install(s)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

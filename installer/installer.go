@@ -27,7 +27,6 @@ type Installer struct {
 	repository Repository
 	varcache   Variables
 	logger     logr.Logger
-	err        error
 }
 
 func New(repository Repository, options ...Option) Installer {
@@ -42,61 +41,48 @@ func New(repository Repository, options ...Option) Installer {
 	return i
 }
 
-func (inst *Installer) Install(services []*service.Service) bool {
-	if len(services) == 0 {
-		inst.logger.Info("The service list is empty")
-		return true
-	}
-
+func (inst *Installer) Install(srv *service.Service) error {
 	ilistFile, err := os.OpenFile(installedListFilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	var list InstallList
 	if err != nil {
-		inst.logger.Error(
-			err,
-			"Continuing without populating the installation list")
+		inst.logger.Error(err, "Continuing without populating the installation list")
 		list = NewInstallList(nil)
 	} else {
 		defer ilistFile.Close()
 		list = NewInstallList(ilistFile)
 	}
+	return inst.installHierarchy(srv, &list)
+}
 
-	for _, srv := range services {
-		if !inst.installHierarchy(srv, &list) {
-			return false
-		}
+func (inst *Installer) installHierarchy(srv *service.Service, list *InstallList) error {
+	if srv == nil {
+		return nil
 	}
-	return true
-}
 
-// Error returns the first error encountered while Installing.
-func (inst *Installer) Error() error {
-	return inst.err
-}
-
-func (inst *Installer) installHierarchy(srv *service.Service, list *InstallList) bool {
 	depGraph, err := inst.repository.ResolveDeps(srv)
 	if err != nil {
-		return inst.setError(err)
+		return err
 	}
 	for level := depGraph.Depth() - 1; level >= 0; level-- {
 		for _, dep := range depGraph.Level(level).Slice() {
-			if !inst.installSingle(dep, list) {
-				return false
+			err := inst.installSingle(dep, list)
+			if err != nil {
+				return err
 			}
 		}
 	}
 	return inst.installSingle(srv, list)
 }
 
-func (inst *Installer) installSingle(srv *service.Service, ilist *InstallList) bool {
+func (inst *Installer) installSingle(srv *service.Service, ilist *InstallList) error {
 	log := inst.logger.WithName(srv.Name)
 	if ilist.Contains(srv.Name) {
 		log.Info("Already installed")
-		return inst.setError(nil)
+		return nil
 	}
 	err := inst.cacheVars(srv)
 	if err != nil {
-		return inst.setError(err)
+		return err
 	}
 	tmpl := NewTemplate(srv.Name, inst.varcache)
 	tmpl.ExtraVars = environMap()
@@ -110,12 +96,11 @@ func (inst *Installer) installSingle(srv *service.Service, ilist *InstallList) b
 	for _, perf := range performers {
 		err := perf(log, srv)
 		if err != nil {
-			log.Error(err, "")
-			return inst.setError(err)
+			return err
 		}
 	}
 	ilist.Insert(srv.Name)
-	return inst.setError(nil)
+	return nil
 }
 
 func (inst *Installer) cacheVars(srv *service.Service) error {
@@ -131,11 +116,6 @@ func (inst *Installer) cacheVars(srv *service.Service) error {
 		return err
 	}
 	return inst.varcache.InsertMany(srv.Name, srv.Variables)
-}
-
-func (inst *Installer) setError(err error) bool {
-	inst.err = err
-	return err == nil
 }
 
 type Option func(*Installer)

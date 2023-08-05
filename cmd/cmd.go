@@ -45,5 +45,8 @@ func Run() {
 	}
 	logger := logger.New(level, !args.Globals.NoColor)
 
-	ctx.Run(&logger)
+	err := ctx.Run(&logger)
+	if err != nil {
+		logger.Error(err, "")
+	}
 }
