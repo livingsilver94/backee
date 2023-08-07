@@ -5,7 +5,8 @@ import (
 	"os"
 
 	"github.com/alecthomas/kong"
-	"github.com/livingsilver94/backee/logger"
+	"github.com/livingsilver94/backee/log"
+	"golang.org/x/exp/slog"
 )
 
 // Version will be injected by ld flags.
@@ -39,14 +40,17 @@ func Run() {
 	var args Arguments
 	ctx := kong.Parse(&args)
 
-	level := logger.LevelInfo
-	if args.Globals.Quiet {
-		level = logger.LevelError
+	logOpt := log.Options{
+		Level:   slog.LevelInfo,
+		Colored: !args.Globals.NoColor,
 	}
-	logger := logger.New(level, !args.Globals.NoColor)
+	if args.Globals.Quiet {
+		logOpt.Level = slog.LevelError
+	}
+	slog.SetDefault(slog.New(log.NewHandler(os.Stdout, &logOpt)))
 
-	err := ctx.Run(&logger)
+	err := ctx.Run()
 	if err != nil {
-		logger.Error(err, "")
+		slog.Error(err.Error())
 	}
 }

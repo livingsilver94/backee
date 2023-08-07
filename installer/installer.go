@@ -4,9 +4,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/go-logr/logr"
 	"github.com/livingsilver94/backee/repo"
 	"github.com/livingsilver94/backee/service"
+	"golang.org/x/exp/slog"
 )
 
 type Repository interface {
@@ -26,14 +26,12 @@ const (
 type Installer struct {
 	repository Repository
 	varcache   Variables
-	logger     logr.Logger
 }
 
 func New(repository Repository, options ...Option) Installer {
 	i := Installer{
 		repository: repository,
 		varcache:   NewVariables(),
-		logger:     logr.Discard(),
 	}
 	for _, option := range options {
 		option(&i)
@@ -45,7 +43,7 @@ func (inst *Installer) Install(srv *service.Service) error {
 	ilistFile, err := os.OpenFile(installedListFilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	var list InstallList
 	if err != nil {
-		inst.logger.Error(err, "Continuing without populating the installation list")
+		slog.Error(err.Error() + ". Continuing without populating the installation list")
 		list = NewInstallList(nil)
 	} else {
 		defer ilistFile.Close()
@@ -75,7 +73,7 @@ func (inst *Installer) installHierarchy(srv *service.Service, list *InstallList)
 }
 
 func (inst *Installer) installSingle(srv *service.Service, ilist *InstallList) error {
-	log := inst.logger.WithName(srv.Name)
+	log := slog.Default().WithGroup(srv.Name)
 	if ilist.Contains(srv.Name) {
 		log.Info("Already installed")
 		return nil
@@ -119,12 +117,6 @@ func (inst *Installer) cacheVars(srv *service.Service) error {
 }
 
 type Option func(*Installer)
-
-func WithLogger(lg logr.Logger) Option {
-	return func(i *Installer) {
-		i.logger = lg
-	}
-}
 
 func WithStore(kind service.VarKind, store VarStore) Option {
 	return func(i *Installer) {

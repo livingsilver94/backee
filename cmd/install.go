@@ -3,11 +3,11 @@ package cmd
 import (
 	"os"
 
-	"github.com/go-logr/logr"
 	"github.com/livingsilver94/backee/installer"
 	"github.com/livingsilver94/backee/repo"
 	"github.com/livingsilver94/backee/secret"
 	"github.com/livingsilver94/backee/service"
+	"golang.org/x/exp/slog"
 )
 
 type KeepassXC struct {
@@ -23,7 +23,7 @@ type Install struct {
 	Services []string `arg:"" optional:"" help:"Services to install. Pass none to install all services in the base directory."`
 }
 
-func (in *Install) Run(logger *logr.Logger) error {
+func (in *Install) Run(logger *slog.Logger) error {
 	if in.Directory == "" {
 		cwd, err := os.Getwd()
 		if err != nil {
@@ -37,12 +37,11 @@ func (in *Install) Run(logger *logr.Logger) error {
 	if err != nil {
 		return err
 	}
-	opts := make([]installer.Option, 0, 2)
+	opts := make([]installer.Option, 0, 1)
 	if in.KeepassXC.Path != "" {
 		store := secret.NewKeepassXC(in.KeepassXC.Path, in.KeepassXC.Password)
 		opts = append(opts, installer.WithStore("keepassxc", store))
 	}
-	opts = append(opts, installer.WithLogger(*logger))
 	ins := installer.New(rep, opts...)
 	for _, s := range srv {
 		err := ins.Install(s)

@@ -10,14 +10,14 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/go-logr/logr"
 	"github.com/livingsilver94/backee/service"
+	"golang.org/x/exp/slog"
 )
 
-type Performer func(logr.Logger, *service.Service) error
+type Performer func(*slog.Logger, *service.Service) error
 
 var (
-	Setup Performer = func(log logr.Logger, srv *service.Service) error {
+	Setup Performer = func(log *slog.Logger, srv *service.Service) error {
 		if srv.Setup == nil || *srv.Setup == "" {
 			return nil
 		}
@@ -25,7 +25,7 @@ var (
 		return runScript(*srv.Setup)
 	}
 
-	PackageInstaller Performer = func(log logr.Logger, srv *service.Service) error {
+	PackageInstaller Performer = func(log *slog.Logger, srv *service.Service) error {
 		if len(srv.Packages) == 0 {
 			return nil
 		}
@@ -38,7 +38,7 @@ var (
 )
 
 func SymlinkPerformer(repo Repository, tmpl Template) Performer {
-	return func(log logr.Logger, srv *service.Service) error {
+	return func(log *slog.Logger, srv *service.Service) error {
 		if len(srv.Links) == 0 {
 			return nil
 		}
@@ -52,7 +52,7 @@ func SymlinkPerformer(repo Repository, tmpl Template) Performer {
 }
 
 func CopyPerformer(repo Repository, tmpl Template) Performer {
-	return func(log logr.Logger, srv *service.Service) error {
+	return func(log *slog.Logger, srv *service.Service) error {
 		if len(srv.Copies) == 0 {
 			return nil
 		}
@@ -104,7 +104,7 @@ func writeFile(dst service.FilePath, src string, wr fileWriter) error {
 }
 
 func Finalizer(tmpl Template) Performer {
-	return func(log logr.Logger, srv *service.Service) error {
+	return func(log *slog.Logger, srv *service.Service) error {
 		if srv.Finalize == nil || *srv.Finalize == "" {
 			return nil
 		}
@@ -124,12 +124,12 @@ type fileWriter interface {
 }
 
 type symlinkWriter struct {
-	log logr.Logger
+	log *slog.Logger
 
 	src string
 }
 
-func newSymlinkWriter(log logr.Logger) *symlinkWriter {
+func newSymlinkWriter(log *slog.Logger) *symlinkWriter {
 	return &symlinkWriter{
 		log: log,
 	}
