@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -51,6 +52,12 @@ func Run() {
 
 	err := ctx.Run()
 	if err != nil {
+		if unwrap := errors.Unwrap(err); unwrap != nil {
+			// kong stupidly wraps the original error with the name
+			// of the command that generated it. I want errors to be
+			// readable to users, not developers.
+			err = unwrap
+		}
 		slog.Error(err.Error())
 	}
 }
