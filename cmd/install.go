@@ -1,13 +1,13 @@
 package cmd
 
 import (
+	"errors"
 	"os"
 
 	"github.com/livingsilver94/backee/installer"
 	"github.com/livingsilver94/backee/repo"
 	"github.com/livingsilver94/backee/secret"
 	"github.com/livingsilver94/backee/service"
-	"golang.org/x/exp/slog"
 )
 
 type KeepassXC struct {
@@ -23,7 +23,7 @@ type Install struct {
 	Services []string `arg:"" optional:"" help:"Services to install. Pass none to install all services in the base directory."`
 }
 
-func (in *Install) Run(logger *slog.Logger) error {
+func (in *Install) Run() error {
 	if in.Directory == "" {
 		cwd, err := os.Getwd()
 		if err != nil {
@@ -31,9 +31,11 @@ func (in *Install) Run(logger *slog.Logger) error {
 		}
 		in.Directory = cwd
 	}
-
 	rep := repo.NewFSRepoVariant(repo.NewOSFS(in.Directory), in.Variant)
 	srv, err := in.services(rep, in.Services)
+	if err == nil && len(srv) == 0 {
+		err = errors.New("no services found")
+	}
 	if err != nil {
 		return err
 	}
