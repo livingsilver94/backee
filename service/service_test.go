@@ -138,6 +138,7 @@ func TestParseVariables(t *testing.T) {
 		"username":     {Kind: service.ClearText, Value: "value1"},
 		"password":     {Kind: service.VarKind("keepassxc"), Value: "dbKey"},
 		"implicitKind": {Kind: service.ClearText, Value: "value2"},
+		"scalar":       {Kind: service.ClearText, Value: "value3"},
 	}
 	const doc = `
 variables:
@@ -148,7 +149,8 @@ variables:
     kind: keepassxc
     value: dbKey
   implicitKind:
-    value: value2`
+    value: value2
+  scalar: value3`
 	srv, err := service.NewFromYAML(name, []byte(doc))
 	if err != nil {
 		t.Fatal(err)
