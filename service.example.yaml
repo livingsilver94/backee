@@ -15,12 +15,12 @@ packages   :
     - nginx-mod-mail
 links      :
     # The simple representation. File mode defaults to http.conf file mode.
-    http.conf: ${XDG_CONFIG_DIRS}/nginx/conf.d/http.conf
+    http.conf: "{{XDG_CONFIG_DIRS}}/nginx/conf.d/http.conf"
     # The complete representation. It allows to pass a preferred file mode.
     ssl.conf :
-        path: ${XDG_CONFIG_DIRS}/nginx/conf.d/ssl.conf
+        path: "{{XDG_CONFIG_DIRS}}/nginx/conf.d/ssl.conf"
         mode: 0o600
-variables       :
+variables  :
     # Cleartext variable. `kind` defaults to `cleartext` when unspecified.
     username : administrator
     # Complete representation. This is a secret variable stored in a database.
@@ -32,5 +32,5 @@ copies     :
     # Let's pretend this file contains templating directives for editing.
     aboutme_debian.html: /var/www/aboutme.html
 finalize   : |
-    echo 'Rembember that your username is {{.username}} with password {{.password}}' > /dev/stderr
+    echo 'Rembember that your username is {{username}} with password {{password}}' > /dev/stderr
     sudo systemctl enable --now nginx.service
