@@ -16,9 +16,10 @@ type KeepassXC struct {
 }
 
 type Install struct {
-	Directory string    `short:"C" type:"existingdir" help:"Change the base directory."`
-	KeepassXC KeepassXC `embed:"" prefix:"keepassxc."`
-	Variant   string    `help:"Specify the system variant."`
+	Directory  string    `short:"C" type:"existingdir" help:"Change the base directory."`
+	KeepassXC  KeepassXC `embed:"" prefix:"keepassxc."`
+	PkgManager []string  `name:"pkgmanager" help:"Override the package manager command for services."`
+	Variant    string    `help:"Specify the system variant."`
 
 	Services []string `arg:"" optional:"" help:"Services to install. Pass none to install all services in the base directory."`
 }
@@ -32,7 +33,7 @@ func (in *Install) Run() error {
 		in.Directory = cwd
 	}
 	rep := repo.NewFSRepoVariant(repo.NewOSFS(in.Directory), in.Variant)
-	srv, err := in.services(rep, in.Services)
+	srv, err := in.services(rep)
 	if err == nil && len(srv) == 0 {
 		err = errors.New("no services found")
 	}
@@ -54,12 +55,16 @@ func (in *Install) Run() error {
 	return nil
 }
 
-func (Install) services(rep repo.FSRepo, names []string) ([]*service.Service, error) {
-	if len(names) == 0 {
+func (in *Install) services(rep repo.FSRepo) ([]*service.Service, error) {
+	if len(in.PkgManager) != 0 {
+		service.DefaultPkgManager = in.PkgManager
+	}
+
+	if len(in.Services) == 0 {
 		return rep.AllServices()
 	}
-	services := make([]*service.Service, 0, len(names))
-	for _, name := range names {
+	services := make([]*service.Service, 0, len(in.Services))
+	for _, name := range in.Services {
 		srv, err := rep.Service(name)
 		if err != nil {
 			return nil, err
