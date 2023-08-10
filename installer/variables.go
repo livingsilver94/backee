@@ -15,14 +15,14 @@ var (
 type serviceName = string
 
 type Variables struct {
-	cache  map[serviceName]value
-	stores map[service.VarKind]VarStore
+	resolved map[serviceName]value
+	stores   map[service.VarKind]VarStore
 }
 
 func NewVariables() Variables {
 	return Variables{
-		cache:  make(map[serviceName]value),
-		stores: make(map[service.VarKind]VarStore),
+		resolved: make(map[serviceName]value),
+		stores:   make(map[service.VarKind]VarStore),
 	}
 }
 
@@ -31,15 +31,15 @@ func NewVariables() Variables {
 // Get parent's variables as well when Getting srv's variables.
 // AddParent returns ErrNoService if srv or parent does not exist.
 func (c Variables) AddParent(srv, parent string) error {
-	val, ok := c.cache[srv]
+	val, ok := c.resolved[srv]
 	if !ok {
 		return ErrNoService
 	}
-	if _, ok := c.cache[parent]; !ok {
+	if _, ok := c.resolved[parent]; !ok {
 		return ErrNoService
 	}
 	val.parents = append(val.parents, parent)
-	c.cache[srv] = val
+	c.resolved[srv] = val
 	return nil
 }
 
@@ -49,8 +49,9 @@ func (c Variables) AddParent(srv, parent string) error {
 func (c Variables) Insert(srv, key string, value service.VarValue) error {
 	switch _, err := c.Get(srv, key); err {
 	case ErrNoService:
-		c.cache[srv] = newValue()
+		c.resolved[srv] = newValue()
 	case ErrNoVariable:
+		break
 	default:
 		return nil
 	}
@@ -68,7 +69,7 @@ func (c Variables) Insert(srv, key string, value service.VarValue) error {
 			return err
 		}
 	}
-	c.cache[srv].vars[key] = v
+	c.resolved[srv].vars[key] = v
 	return nil
 }
 
@@ -85,7 +86,7 @@ func (c Variables) InsertMany(srv string, values map[string]service.VarValue) er
 // Parents returns the parent list of srv.
 // If srv does not exist, ErrNoService is returned.
 func (c Variables) Parents(srv string) ([]string, error) {
-	val, ok := c.cache[srv]
+	val, ok := c.resolved[srv]
 	if !ok {
 		return nil, ErrNoService
 	}
@@ -93,7 +94,7 @@ func (c Variables) Parents(srv string) ([]string, error) {
 }
 
 func (c Variables) Get(service, key string) (string, error) {
-	val, ok := c.cache[service]
+	val, ok := c.resolved[service]
 	if !ok {
 		return "", ErrNoService
 	}
@@ -105,11 +106,11 @@ func (c Variables) Get(service, key string) (string, error) {
 }
 
 func (c Variables) Length() int {
-	return len(c.cache)
+	return len(c.resolved)
 }
 
 func (c Variables) GetAll(service string) map[string]string {
-	return c.cache[service].vars
+	return c.resolved[service].vars
 }
 
 func (c Variables) RegisterStore(kind service.VarKind, store VarStore) {
