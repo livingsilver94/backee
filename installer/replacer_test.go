@@ -8,13 +8,13 @@ import (
 	"github.com/livingsilver94/backee/service"
 )
 
-func TestTemplateServiceVar(t *testing.T) {
+func TestReplaceServiceVar(t *testing.T) {
 	vars := createVariables("var1", "value1", "var2", "value2")
-	tmpl := installer.NewTemplate(serviceName, vars)
+	repl := installer.NewReplacer(serviceName, vars)
 
 	s := "this test prints {{var2}}"
 	const expected = "this test prints value2"
-	obtained, err := tmpl.ExecuteString(s)
+	obtained, err := repl.ReplaceToString(s)
 	if err != nil {
 		t.Fatalf("expected nil error. Got %v", err)
 	}
@@ -23,24 +23,24 @@ func TestTemplateServiceVar(t *testing.T) {
 	}
 }
 
-func TestTemplateNoVar(t *testing.T) {
+func TestReplaceNoVar(t *testing.T) {
 	vars := createVariables("var1", "value1", "var2", "value2")
-	tmpl := installer.NewTemplate(serviceName, vars)
+	repl := installer.NewReplacer(serviceName, vars)
 
-	_, err := tmpl.ExecuteString("{{thisKey}} is not among variables")
+	_, err := repl.ReplaceToString("{{thisKey}} is not among variables")
 	if !errors.Is(err, installer.ErrNoVariable) {
 		t.Fatalf("expected %v. Got %v", installer.ErrNoVariable, err)
 	}
 }
 
-func TestTemplateExtraVar(t *testing.T) {
+func TestReplaceExtraVar(t *testing.T) {
 	vars := createVariables("var1", "value1", "var2", "value2")
-	tmpl := installer.NewTemplate(serviceName, vars)
-	tmpl.ExtraVars = map[string]string{"extra": "extraValue"}
+	repl := installer.NewReplacer(serviceName, vars)
+	repl.ExtraVars = map[string]string{"extra": "extraValue"}
 
 	s := "this test prints {{extra}}"
 	const expected = "this test prints extraValue"
-	obtained, err := tmpl.ExecuteString(s)
+	obtained, err := repl.ReplaceToString(s)
 	if err != nil {
 		t.Fatalf("expected nil error. Got %v", err)
 	}
@@ -49,15 +49,15 @@ func TestTemplateExtraVar(t *testing.T) {
 	}
 }
 
-func TestTemplateParentVar(t *testing.T) {
+func TestReplaceParentVar(t *testing.T) {
 	vars := createVariables("var1", "value1", "var2", "value2")
 	vars.Insert("parent", "var1", service.VarValue{Kind: service.ClearText, Value: "parentValue1"})
 	vars.AddParent(serviceName, "parent")
-	tmpl := installer.NewTemplate(serviceName, vars)
+	repl := installer.NewReplacer(serviceName, vars)
 
 	s := "this test prints {{parent.var1}}"
 	const expected = "this test prints parentValue1"
-	obtained, err := tmpl.ExecuteString(s)
+	obtained, err := repl.ReplaceToString(s)
 	if err != nil {
 		t.Fatalf("expected nil error. Got %v", err)
 	}

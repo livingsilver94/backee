@@ -16,7 +16,7 @@ type Repository interface {
 }
 
 type VarStore interface {
-	Value(storeValue string) (varValue string, err error)
+	Value(varName string) (varValue string, err error)
 }
 
 const (
@@ -25,13 +25,13 @@ const (
 
 type Installer struct {
 	repository Repository
-	varcache   Variables
+	variables  Variables
 }
 
 func New(repository Repository, options ...Option) Installer {
 	i := Installer{
 		repository: repository,
-		varcache:   NewVariables(),
+		variables:  NewVariables(),
 	}
 	for _, option := range options {
 		option(&i)
@@ -82,14 +82,14 @@ func (inst *Installer) installSingle(srv *service.Service, ilist *InstallList) e
 	if err != nil {
 		return err
 	}
-	tmpl := NewTemplate(srv.Name, inst.varcache)
-	tmpl.ExtraVars = environMap()
+	repl := NewReplacer(srv.Name, inst.variables)
+	repl.ExtraVars = environMap()
 	performers := []Performer{
 		Setup,
 		PackageInstaller,
-		SymlinkPerformer(inst.repository, tmpl),
-		CopyPerformer(inst.repository, tmpl),
-		Finalizer(tmpl),
+		SymlinkPerformer(inst.repository, repl),
+		CopyPerformer(inst.repository, repl),
+		Finalizer(repl),
 	}
 	for _, perf := range performers {
 		err := perf(log, srv)
@@ -106,21 +106,21 @@ func (inst *Installer) cacheVars(srv *service.Service) error {
 	if err != nil {
 		return err
 	}
-	err = inst.varcache.Insert(
+	err = inst.variables.Insert(
 		srv.Name,
 		service.VarDatadir,
 		service.VarValue{Kind: service.ClearText, Value: datadir})
 	if err != nil {
 		return err
 	}
-	return inst.varcache.InsertMany(srv.Name, srv.Variables)
+	return inst.variables.InsertMany(srv.Name, srv.Variables)
 }
 
 type Option func(*Installer)
 
 func WithStore(kind service.VarKind, store VarStore) Option {
 	return func(i *Installer) {
-		i.varcache.RegisterStore(kind, store)
+		i.variables.RegisterStore(kind, store)
 	}
 }
 

@@ -37,7 +37,7 @@ var (
 	}
 )
 
-func SymlinkPerformer(repo Repository, tmpl Template) Performer {
+func SymlinkPerformer(repo Repository, repl Replacer) Performer {
 	return func(log *slog.Logger, srv *service.Service) error {
 		if len(srv.Links) == 0 {
 			return nil
@@ -47,11 +47,11 @@ func SymlinkPerformer(repo Repository, tmpl Template) Performer {
 		if err != nil {
 			return err
 		}
-		return writeFiles(srv.Links, linkDir, tmpl, newSymlinkWriter(log))
+		return writeFiles(srv.Links, linkDir, repl, newSymlinkWriter(log))
 	}
 }
 
-func CopyPerformer(repo Repository, tmpl Template) Performer {
+func CopyPerformer(repo Repository, repl Replacer) Performer {
 	return func(log *slog.Logger, srv *service.Service) error {
 		if len(srv.Copies) == 0 {
 			return nil
@@ -61,14 +61,14 @@ func CopyPerformer(repo Repository, tmpl Template) Performer {
 		if err != nil {
 			return err
 		}
-		return writeFiles(srv.Copies, dataDir, tmpl, newCopyWriter(tmpl))
+		return writeFiles(srv.Copies, dataDir, repl, newCopyWriter(repl))
 	}
 }
 
-func writeFiles(files map[string]service.FilePath, baseDir string, tmpl Template, wr fileWriter) error {
+func writeFiles(files map[string]service.FilePath, baseDir string, repl Replacer, wr fileWriter) error {
 	var dstBuf strings.Builder
 	for src, dst := range files {
-		err := tmpl.Execute(dst.Path, &dstBuf)
+		err := repl.Replace(dst.Path, &dstBuf)
 		if err != nil {
 			return err
 		}
@@ -103,14 +103,14 @@ func writeFile(dst service.FilePath, src string, wr fileWriter) error {
 	return nil
 }
 
-func Finalizer(tmpl Template) Performer {
+func Finalizer(repl Replacer) Performer {
 	return func(log *slog.Logger, srv *service.Service) error {
 		if srv.Finalize == nil || *srv.Finalize == "" {
 			return nil
 		}
 		log.Info("Running finalizer script")
 		var script strings.Builder
-		err := tmpl.Execute(*srv.Finalize, &script)
+		err := repl.Replace(*srv.Finalize, &script)
 		if err != nil {
 			return err
 		}
@@ -155,14 +155,14 @@ func (w *symlinkWriter) writeDestination(dst string) error {
 }
 
 type copyWriter struct {
-	tmpl Template
+	repl Replacer
 
 	srcContent string
 }
 
-func newCopyWriter(tmpl Template) *copyWriter {
+func newCopyWriter(repl Replacer) *copyWriter {
 	return &copyWriter{
-		tmpl: tmpl,
+		repl: repl,
 	}
 }
 
@@ -179,7 +179,7 @@ func (w *copyWriter) writeDestination(dst string) error {
 	}
 	defer dstFile.Close()
 	buff := bufio.NewWriter(dstFile)
-	err = w.tmpl.Execute(w.srcContent, buff)
+	err = w.repl.Replace(w.srcContent, buff)
 	if err != nil {
 		return err
 	}

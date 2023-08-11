@@ -12,6 +12,16 @@ const (
 	// VarDatadir is the variable name that
 	// idenfies a Service's data directory path.
 	VarDatadir = "datadir"
+
+	// VarOpenTag is the string opening a variable name
+	// to be replaced with its real value.
+	VarOpenTag = "{{"
+	// VarParentSep separates parent service's name with
+	// parent service's variable name, when addressing a parent's variable.
+	VarParentSep = "."
+	// TemplateOpenTag is the string closing a variable name
+	// to be replaced with its real value.
+	VarCloseTag = "}}"
 )
 
 var (
