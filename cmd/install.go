@@ -10,21 +10,21 @@ import (
 	"github.com/livingsilver94/backee/service"
 )
 
-type KeepassXC struct {
+type keepassXC struct {
 	Path     string `env:"KEEPASSXC_PATH" help:"KeepassXC database path."`
 	Password string `env:"KEEPASSXC_PASSWORD" help:"KeepassXC database password."`
 }
 
-type Install struct {
+type install struct {
 	Directory  string    `short:"C" type:"existingdir" help:"Change the base directory."`
-	KeepassXC  KeepassXC `embed:"" prefix:"keepassxc."`
+	KeepassXC  keepassXC `embed:"" prefix:"keepassxc."`
 	PkgManager []string  `name:"pkgmanager" help:"Override the package manager command for services."`
 	Variant    string    `help:"Specify the system variant."`
 
 	Services []string `arg:"" optional:"" help:"Services to install. Pass none to install all services in the base directory."`
 }
 
-func (in *Install) Run() error {
+func (in *install) Run() error {
 	if in.Directory == "" {
 		cwd, err := os.Getwd()
 		if err != nil {
@@ -55,7 +55,7 @@ func (in *Install) Run() error {
 	return nil
 }
 
-func (in *Install) services(rep repo.FSRepo) ([]*service.Service, error) {
+func (in *install) services(rep repo.FSRepo) ([]*service.Service, error) {
 	if len(in.PkgManager) != 0 {
 		service.DefaultPkgManager = in.PkgManager
 	}

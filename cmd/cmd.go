@@ -21,16 +21,16 @@ func (v *flagVersion) BeforeReset() error {
 	return nil
 }
 
-type Globals struct {
+type globals struct {
 	NoColor bool        `help:"Do not color output (the default when in a non-interactive shell)."`
 	Quiet   bool        `short:"q" help:"Do not print anything on the terminal except errors."`
 	Version flagVersion `short:"v" help:"Print the version number and exit."`
 }
 
-type Arguments struct {
-	Globals
+type arguments struct {
+	globals
 
-	Install Install `cmd:"" default:"withargs"`
+	Install install `cmd:"" default:"withargs"`
 	// Copy is hidden and it is not meant to be called by users,
 	// instead Backee will call it in a privileged fork of itself
 	// to perform filesystem operations where admninistration rights are required.
@@ -38,14 +38,14 @@ type Arguments struct {
 }
 
 func Run() {
-	var args Arguments
+	var args arguments
 	ctx := kong.Parse(&args)
 
 	logOpt := log.Options{
 		Level:   slog.LevelInfo,
-		Colored: !args.Globals.NoColor,
+		Colored: !args.globals.NoColor,
 	}
-	if args.Globals.Quiet {
+	if args.globals.Quiet {
 		logOpt.Level = slog.LevelError
 	}
 	slog.SetDefault(slog.New(log.NewHandler(os.Stdout, &logOpt)))
