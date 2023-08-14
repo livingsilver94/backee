@@ -38,7 +38,7 @@ func (m *SourceDestMessage) DecodeReader(r io.Reader) error {
 
 type WriteContentMessage struct {
 	Dest    string
-	content io.Reader
+	Content io.Reader
 }
 
 func (m *WriteContentMessage) EncodeWriter(w io.Writer) error {
@@ -47,7 +47,7 @@ func (m *WriteContentMessage) EncodeWriter(w io.Writer) error {
 	if err != nil {
 		return err
 	}
-	_, err = io.Copy(w, m.content)
+	_, err = io.Copy(w, m.Content)
 	return err
 }
 
@@ -57,6 +57,6 @@ func (m *WriteContentMessage) DecodeReader(r io.Reader) error {
 	if err != nil {
 		return err
 	}
-	m.content = r
+	m.Content = r
 	return err
 }
