@@ -31,15 +31,15 @@ type arguments struct {
 	globals
 
 	Install install `cmd:"" default:"withargs"`
-	// Copy is hidden and it is not meant to be called by users,
-	// instead Backee will call it in a privileged fork of itself
-	// to perform filesystem operations where admninistration rights are required.
-	Copy copy `cmd:"" hidden:""`
+	// Privileged is  a hidden subcommand, not meant to be called by users.
+	// Instead, Backee will call it in a privileged fork of itself
+	// to perform filesystem operations where administration rights are required.
+	Privileged privileged `cmd:"" hidden:""`
 }
 
 func Run() {
 	var args arguments
-	ctx := kong.Parse(&args)
+	ctx := kong.Parse(&args, kong.NamedMapper("fd", kong.MapperFunc(fdMapper)))
 
 	logOpt := log.Options{
 		Level:   slog.LevelInfo,
