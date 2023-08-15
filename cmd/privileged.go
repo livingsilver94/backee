@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/alecthomas/kong"
+	priv "github.com/livingsilver94/backee/installer/privileged"
 )
 
 type privileged struct {
@@ -17,8 +18,12 @@ type privileged struct {
 }
 
 func (p privileged) Run() error {
-	defer p.Pipe.Close()
-	return nil
+	cmd, err := priv.ReceiveCommand(p.Pipe)
+	if err != nil {
+		return err
+	}
+	p.Pipe.Close()
+	return cmd.Execute()
 }
 
 func fdMapper(ctx *kong.DecodeContext, target reflect.Value) error {

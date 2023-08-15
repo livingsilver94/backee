@@ -112,3 +112,7 @@ func (c Command) Send(w io.Writer) error {
 	}
 	return c.message.EncodeWriter(w)
 }
+
+func (c Command) Execute() error {
+	return nil
+}
