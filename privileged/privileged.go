@@ -5,21 +5,28 @@ import (
 	"io"
 )
 
-type WriterEncoder interface {
+type Message interface {
 	EncodeWriter(w io.Writer) error
-}
-
-type ReaderDecoder interface {
 	DecodeReader(r io.Reader) error
 }
 
-type Action int
+type action int
 
 const (
-	LinkFile Action = iota + 1
-	CopyFile
-	WriteContent
+	linkFile action = iota + 1
+	copyFile
+	writeContent
 )
+
+func (a action) properMessage() Message {
+	switch a {
+	case linkFile, copyFile:
+		return &SourceDestMessage{}
+	case writeContent:
+		return &WriteContentMessage{}
+	}
+	return nil
+}
 
 type SourceDestMessage struct {
 	Source string
@@ -59,4 +66,49 @@ func (m *WriteContentMessage) DecodeReader(r io.Reader) error {
 	}
 	m.Content = r
 	return err
+}
+
+type Command struct {
+	action  action
+	message Message
+}
+
+func NewLinkFileCommand(msg *SourceDestMessage) Command {
+	return Command{
+		action:  linkFile,
+		message: msg,
+	}
+}
+
+func NewCopyFileCommand(msg *SourceDestMessage) Command {
+	return Command{
+		action:  copyFile,
+		message: msg,
+	}
+}
+
+func NewWriteContentMessage(msg *WriteContentMessage) Command {
+	return Command{
+		action:  writeContent,
+		message: msg,
+	}
+}
+
+func ReceiveCommand(r io.Reader) (Command, error) {
+	var cmd Command
+	err := gob.NewDecoder(r).Decode(&cmd.action)
+	if err != nil {
+		return cmd, err
+	}
+
+	cmd.message = cmd.action.properMessage()
+	return cmd, cmd.message.DecodeReader(r)
+}
+
+func (c Command) Send(w io.Writer) error {
+	err := gob.NewEncoder(w).Encode(c.action)
+	if err != nil {
+		return err
+	}
+	return c.message.EncodeWriter(w)
 }

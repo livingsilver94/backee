@@ -3,6 +3,7 @@ package privileged_test
 import (
 	"bytes"
 	"io"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -56,5 +57,27 @@ func TestWriteContentMessageCodec(t *testing.T) {
 	}
 	if string(s) != content {
 		t.Fatalf("expected content %v. Got %v", content, s)
+	}
+}
+
+func TestCommandSendReceive(t *testing.T) {
+	expected := privileged.NewLinkFileCommand(
+		&privileged.SourceDestMessage{
+			Source: "a/b",
+			Dest:   "c/d",
+		},
+	)
+	buf := &bytes.Buffer{}
+	err := expected.Send(buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cmd, err := privileged.ReceiveCommand(buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(cmd, expected) {
+		t.Fatalf("expected command %v. Got %v", expected, cmd)
 	}
 }
