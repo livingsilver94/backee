@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/livingsilver94/backee/service"
+	"github.com/livingsilver94/backee"
 )
 
 const (
@@ -41,7 +41,7 @@ func NewFSRepoVariant(baseFS fs.FS, variant string) FSRepo {
 }
 
 // Service returns the service with the name provided.
-func (repo FSRepo) Service(name string) (*service.Service, error) {
+func (repo FSRepo) Service(name string) (*backee.Service, error) {
 	var fname string
 	if repo.variant != "" {
 		fname = name + "/" + (fsRepoFilenamePrefix + "_" + repo.variant + fsRepoFilenameSuffix)
@@ -53,16 +53,16 @@ func (repo FSRepo) Service(name string) (*service.Service, error) {
 		return nil, err
 	}
 	defer file.Close()
-	return service.NewFromYAMLReader(name, file)
+	return backee.NewServiceFromYAMLReader(name, file)
 }
 
 // AllServices returns all services in the filesystem.
-func (repo FSRepo) AllServices() ([]*service.Service, error) {
+func (repo FSRepo) AllServices() ([]*backee.Service, error) {
 	children, err := fs.ReadDir(repo.baseFS, ".")
 	if err != nil {
 		return nil, err
 	}
-	services := make([]*service.Service, 0, len(children))
+	services := make([]*backee.Service, 0, len(children))
 	for _, child := range children {
 		if !child.IsDir() {
 			continue
@@ -83,7 +83,7 @@ const depGraphDefaultDepth = 4
 
 // ResolveDeps resolves the dependency graph for srv.
 // If srv has no dependencies, the dependency graph will be empty.
-func (repo FSRepo) ResolveDeps(srv *service.Service) (DepGraph, error) {
+func (repo FSRepo) ResolveDeps(srv *backee.Service) (DepGraph, error) {
 	graph := NewDepGraph(depGraphDefaultDepth)
 	if srv.Depends == nil {
 		return graph, nil
@@ -115,7 +115,7 @@ func (repo FSRepo) LinkDir(name string) (string, error) {
 	}
 }
 
-func (repo FSRepo) resolveDeps(graph *DepGraph, level int, deps *service.DepSet) error {
+func (repo FSRepo) resolveDeps(graph *DepGraph, level int, deps *backee.DepSet) error {
 	for _, depName := range deps.Slice() {
 		srv, err := repo.Service(depName)
 		if err != nil {
@@ -128,7 +128,7 @@ func (repo FSRepo) resolveDeps(graph *DepGraph, level int, deps *service.DepSet)
 	}
 
 	// Gather dependencies of dependencies.
-	subdeps := service.NewDepSet(depSetDefaultCap)
+	subdeps := backee.NewDepSet(depSetDefaultCap)
 	for _, subdep := range graph.Level(level).Slice() {
 		if subdep.Depends == nil {
 			continue

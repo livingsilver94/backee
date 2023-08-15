@@ -10,14 +10,14 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/livingsilver94/backee/service"
+	"github.com/livingsilver94/backee"
 	"golang.org/x/exp/slog"
 )
 
-type Performer func(*slog.Logger, *service.Service) error
+type Performer func(*slog.Logger, *backee.Service) error
 
 var (
-	Setup Performer = func(log *slog.Logger, srv *service.Service) error {
+	Setup Performer = func(log *slog.Logger, srv *backee.Service) error {
 		if srv.Setup == nil || *srv.Setup == "" {
 			return nil
 		}
@@ -25,7 +25,7 @@ var (
 		return runScript(*srv.Setup)
 	}
 
-	PackageInstaller Performer = func(log *slog.Logger, srv *service.Service) error {
+	PackageInstaller Performer = func(log *slog.Logger, srv *backee.Service) error {
 		if len(srv.Packages) == 0 {
 			return nil
 		}
@@ -38,7 +38,7 @@ var (
 )
 
 func SymlinkPerformer(repo Repository, repl Replacer) Performer {
-	return func(log *slog.Logger, srv *service.Service) error {
+	return func(log *slog.Logger, srv *backee.Service) error {
 		if len(srv.Links) == 0 {
 			return nil
 		}
@@ -52,7 +52,7 @@ func SymlinkPerformer(repo Repository, repl Replacer) Performer {
 }
 
 func CopyPerformer(repo Repository, repl Replacer) Performer {
-	return func(log *slog.Logger, srv *service.Service) error {
+	return func(log *slog.Logger, srv *backee.Service) error {
 		if len(srv.Copies) == 0 {
 			return nil
 		}
@@ -65,14 +65,14 @@ func CopyPerformer(repo Repository, repl Replacer) Performer {
 	}
 }
 
-func writeFiles(files map[string]service.FilePath, baseDir string, repl Replacer, wr fileWriter) error {
+func writeFiles(files map[string]backee.FilePath, baseDir string, repl Replacer, wr fileWriter) error {
 	var dstBuf strings.Builder
 	for src, dst := range files {
 		err := repl.Replace(dst.Path, &dstBuf)
 		if err != nil {
 			return err
 		}
-		err = writeFile(service.FilePath{Path: dstBuf.String(), Mode: dst.Mode}, filepath.Join(baseDir, src), wr)
+		err = writeFile(backee.FilePath{Path: dstBuf.String(), Mode: dst.Mode}, filepath.Join(baseDir, src), wr)
 		if err != nil {
 			if !errors.Is(err, fs.ErrPermission) {
 				return err
@@ -84,7 +84,7 @@ func writeFiles(files map[string]service.FilePath, baseDir string, repl Replacer
 	return nil
 }
 
-func writeFile(dst service.FilePath, src string, wr fileWriter) error {
+func writeFile(dst backee.FilePath, src string, wr fileWriter) error {
 	err := wr.loadSource(src)
 	if err != nil {
 		return err
@@ -104,7 +104,7 @@ func writeFile(dst service.FilePath, src string, wr fileWriter) error {
 }
 
 func Finalizer(repl Replacer) Performer {
-	return func(log *slog.Logger, srv *service.Service) error {
+	return func(log *slog.Logger, srv *backee.Service) error {
 		if srv.Finalize == nil || *srv.Finalize == "" {
 			return nil
 		}

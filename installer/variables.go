@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/livingsilver94/backee/service"
+	"github.com/livingsilver94/backee"
 )
 
 var (
@@ -16,13 +16,13 @@ type serviceName = string
 
 type Variables struct {
 	resolved map[serviceName]value
-	stores   map[service.VarKind]VarStore
+	stores   map[backee.VarKind]VarStore
 }
 
 func NewVariables() Variables {
 	return Variables{
 		resolved: make(map[serviceName]value),
-		stores:   make(map[service.VarKind]VarStore),
+		stores:   make(map[backee.VarKind]VarStore),
 	}
 }
 
@@ -46,7 +46,7 @@ func (c Variables) AddParent(srv, parent string) error {
 // Insert saves value for a service named srv under key.
 // If the value is not clear text, it is resolved immediately and then cached.
 // If key is already present for srv, Insert is no-op.
-func (c Variables) Insert(srv, key string, value service.VarValue) error {
+func (c Variables) Insert(srv, key string, value backee.VarValue) error {
 	switch _, err := c.Get(srv, key); err {
 	case ErrNoService:
 		c.resolved[srv] = newValue()
@@ -56,7 +56,7 @@ func (c Variables) Insert(srv, key string, value service.VarValue) error {
 		return nil
 	}
 	var v string
-	if kind := value.Kind; kind == service.ClearText {
+	if kind := value.Kind; kind == backee.ClearText {
 		v = value.Value
 	} else {
 		store, ok := c.stores[kind]
@@ -73,7 +73,7 @@ func (c Variables) Insert(srv, key string, value service.VarValue) error {
 	return nil
 }
 
-func (c Variables) InsertMany(srv string, values map[string]service.VarValue) error {
+func (c Variables) InsertMany(srv string, values map[string]backee.VarValue) error {
 	for key, value := range values {
 		err := c.Insert(srv, key, value)
 		if err != nil {
@@ -113,7 +113,7 @@ func (c Variables) GetAll(service string) map[string]string {
 	return c.resolved[service].vars
 }
 
-func (c Variables) RegisterStore(kind service.VarKind, store VarStore) {
+func (c Variables) RegisterStore(kind backee.VarKind, store VarStore) {
 	c.stores[kind] = store
 }
 

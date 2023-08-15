@@ -1,4 +1,4 @@
-package service
+package backee
 
 import (
 	"errors"
@@ -40,7 +40,7 @@ type Service struct {
 	Finalize   *string             `yaml:"finalize"`
 }
 
-func NewFromYAML(name string, yml []byte) (*Service, error) {
+func NewServiceFromYAML(name string, yml []byte) (*Service, error) {
 	var srv Service
 	err := yaml.Unmarshal(yml, &srv)
 	if err != nil {
@@ -53,7 +53,7 @@ func NewFromYAML(name string, yml []byte) (*Service, error) {
 	return &srv, nil
 }
 
-func NewFromYAMLReader(name string, rd io.Reader) (*Service, error) {
+func NewServiceFromYAMLReader(name string, rd io.Reader) (*Service, error) {
 	var srv Service
 	err := yaml.NewDecoder(rd).Decode(&srv)
 	if err != nil && !errors.Is(err, io.EOF) {

@@ -4,15 +4,15 @@ import (
 	"os"
 	"strings"
 
+	"github.com/livingsilver94/backee"
 	"github.com/livingsilver94/backee/repo"
-	"github.com/livingsilver94/backee/service"
 	"golang.org/x/exp/slog"
 )
 
 type Repository interface {
 	DataDir(srvName string) (string, error)
 	LinkDir(srvName string) (string, error)
-	ResolveDeps(srv *service.Service) (repo.DepGraph, error)
+	ResolveDeps(srv *backee.Service) (repo.DepGraph, error)
 }
 
 type VarStore interface {
@@ -39,7 +39,7 @@ func New(repository Repository, options ...Option) Installer {
 	return i
 }
 
-func (inst *Installer) Install(srv *service.Service) error {
+func (inst *Installer) Install(srv *backee.Service) error {
 	ilistFile, err := os.OpenFile(installedListFilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	var list InstallList
 	if err != nil {
@@ -52,7 +52,7 @@ func (inst *Installer) Install(srv *service.Service) error {
 	return inst.installHierarchy(srv, &list)
 }
 
-func (inst *Installer) installHierarchy(srv *service.Service, list *InstallList) error {
+func (inst *Installer) installHierarchy(srv *backee.Service, list *InstallList) error {
 	if srv == nil {
 		return nil
 	}
@@ -72,7 +72,7 @@ func (inst *Installer) installHierarchy(srv *service.Service, list *InstallList)
 	return inst.installSingle(srv, list)
 }
 
-func (inst *Installer) installSingle(srv *service.Service, ilist *InstallList) error {
+func (inst *Installer) installSingle(srv *backee.Service, ilist *InstallList) error {
 	log := slog.Default().WithGroup(srv.Name)
 	if ilist.Contains(srv.Name) {
 		log.Info("Already installed")
@@ -101,15 +101,15 @@ func (inst *Installer) installSingle(srv *service.Service, ilist *InstallList) e
 	return nil
 }
 
-func (inst *Installer) cacheVars(srv *service.Service) error {
+func (inst *Installer) cacheVars(srv *backee.Service) error {
 	datadir, err := inst.repository.DataDir(srv.Name)
 	if err != nil {
 		return err
 	}
 	err = inst.variables.Insert(
 		srv.Name,
-		service.VarDatadir,
-		service.VarValue{Kind: service.ClearText, Value: datadir})
+		backee.VarDatadir,
+		backee.VarValue{Kind: backee.ClearText, Value: datadir})
 	if err != nil {
 		return err
 	}
@@ -118,7 +118,7 @@ func (inst *Installer) cacheVars(srv *service.Service) error {
 
 type Option func(*Installer)
 
-func WithStore(kind service.VarKind, store VarStore) Option {
+func WithStore(kind backee.VarKind, store VarStore) Option {
 	return func(i *Installer) {
 		i.variables.RegisterStore(kind, store)
 	}

@@ -3,13 +3,13 @@ package repo_test
 import (
 	"testing"
 
+	"github.com/livingsilver94/backee"
 	"github.com/livingsilver94/backee/repo"
-	"github.com/livingsilver94/backee/service"
 )
 
 func TestInsert1Level(t *testing.T) {
 	graph := repo.NewDepGraph(1)
-	service := &service.Service{Name: "serv1"}
+	service := &backee.Service{Name: "serv1"}
 	graph.Insert(0, service)
 	if graph.Depth() != 1 {
 		t.Fatalf("graph depth (%d) went deeper than expected (%d)", graph.Depth(), 1)
@@ -21,8 +21,8 @@ func TestInsert1Level(t *testing.T) {
 
 func TestInsert2Level(t *testing.T) {
 	graph := repo.NewDepGraph(1)
-	service1 := &service.Service{Name: "serv1"}
-	service2 := &service.Service{Name: "serv2"}
+	service1 := &backee.Service{Name: "serv1"}
+	service2 := &backee.Service{Name: "serv2"}
 	graph.Insert(0, service1)
 	graph.Insert(1, service2)
 	if graph.Depth() != 2 {

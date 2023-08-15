@@ -4,7 +4,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/livingsilver94/backee/service"
+	"github.com/livingsilver94/backee"
 	"github.com/valyala/fasttemplate"
 )
 
@@ -27,7 +27,7 @@ func NewReplacer(srvName string, vars Variables) Replacer {
 }
 
 func (t Replacer) Replace(s string, w io.Writer) error {
-	err := repl.Reset(s, service.VarOpenTag, service.VarCloseTag)
+	err := repl.Reset(s, backee.VarOpenTag, backee.VarCloseTag)
 	if err != nil {
 		return err
 	}
@@ -43,14 +43,14 @@ func (t Replacer) ReplaceToString(s string) (string, error) {
 
 func (t Replacer) replaceTag(w io.Writer, varName string) (int, error) {
 	if val, err := t.variables.Get(t.srvName, varName); err == nil {
-		// Matched a variable local to the service.
+		// Matched a variable local to the backee.
 		return w.Write([]byte(val))
 	}
 	if val, ok := t.ExtraVars[varName]; ok {
 		// Matched an extra variable.
 		return w.Write([]byte(val))
 	}
-	parentName, parentVar, found := strings.Cut(varName, service.VarParentSep)
+	parentName, parentVar, found := strings.Cut(varName, backee.VarParentSep)
 	if !found {
 		return 0, ErrNoVariable
 	}
