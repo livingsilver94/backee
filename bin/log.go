@@ -1,4 +1,4 @@
-package log
+package main
 
 import (
 	"bufio"
@@ -11,38 +11,38 @@ import (
 	"golang.org/x/exp/slog"
 )
 
-// Handler is a slog handler with a focus on readability and aesthetics,
+// LogHandler is a slog handler with a focus on readability and aesthetics,
 // although it sacrifices parsability a little.
-type Handler struct {
+type LogHandler struct {
 	dest *bufio.Writer
 	// group is a string idenfying a particular context while logging.
 	group string
 	// attribs is a collection of default attributes to be logged.
 	attribs []slog.Attr
 
-	opts Options
+	opts LogHandlerOptions
 }
 
-func NewHandler(dest io.Writer, op *Options) Handler {
-	var opts Options
+func NewLogHandler(dest io.Writer, op *LogHandlerOptions) LogHandler {
+	var opts LogHandlerOptions
 	if op != nil {
 		opts = *op
 	} else {
-		opts = DefaultOptions()
+		opts = DefaultHandlerOptions()
 	}
-	return Handler{
+	return LogHandler{
 		dest: bufio.NewWriter(dest),
 		opts: opts,
 	}
 }
 
 // Enabled implements slog.Handler's Enabled function.
-func (h Handler) Enabled(_ context.Context, level slog.Level) bool {
+func (h LogHandler) Enabled(_ context.Context, level slog.Level) bool {
 	return level >= h.opts.Level
 }
 
 // Handle implements slog.Handler's Handle function.
-func (h Handler) Handle(_ context.Context, rec slog.Record) error {
+func (h LogHandler) Handle(_ context.Context, rec slog.Record) error {
 	err := h.printPrefix(rec.Time)
 	if err != nil {
 		return err
@@ -63,8 +63,8 @@ func (h Handler) Handle(_ context.Context, rec slog.Record) error {
 }
 
 // WithAttrs implements slog.Handler's WithAttrs function.
-func (h Handler) WithAttrs(attrs []slog.Attr) slog.Handler {
-	return Handler{
+func (h LogHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
+	return LogHandler{
 		dest:    h.dest,
 		group:   h.group,
 		attribs: append(h.attribs, attrs...),
@@ -73,8 +73,8 @@ func (h Handler) WithAttrs(attrs []slog.Attr) slog.Handler {
 }
 
 // WithGroup implements slog.Handler's WithGroup function.
-func (h Handler) WithGroup(group string) slog.Handler {
-	return Handler{
+func (h LogHandler) WithGroup(group string) slog.Handler {
+	return LogHandler{
 		dest:    h.dest,
 		group:   group,
 		attribs: h.attribs,
@@ -82,7 +82,7 @@ func (h Handler) WithGroup(group string) slog.Handler {
 	}
 }
 
-func (h Handler) printPrefix(t time.Time) error {
+func (h LogHandler) printPrefix(t time.Time) error {
 	var err error
 	tim := t.Format("15:04:05")
 	if h.group != "" {
@@ -93,7 +93,7 @@ func (h Handler) printPrefix(t time.Time) error {
 	return err
 }
 
-func (h Handler) printMessage(level slog.Level, message string) error {
+func (h LogHandler) printMessage(level slog.Level, message string) error {
 	if message == "" {
 		return nil
 	}
@@ -106,7 +106,7 @@ func (h Handler) printMessage(level slog.Level, message string) error {
 	return err
 }
 
-func (h Handler) printAttributes(r slog.Record) error {
+func (h LogHandler) printAttributes(r slog.Record) error {
 	if r.NumAttrs() == 0 {
 		return nil
 	}
@@ -125,12 +125,12 @@ func (h Handler) printAttributes(r slog.Record) error {
 }
 
 // printSeparator prints a separator between pieces of information.
-func (h Handler) printSeparator() error {
+func (h LogHandler) printSeparator() error {
 	_, err := fmt.Fprint(h.dest, " | ")
 	return err
 }
 
-func (h Handler) color(attrs ...color.Attribute) *color.Color {
+func (h LogHandler) color(attrs ...color.Attribute) *color.Color {
 	var col *color.Color
 	if h.opts.Colored {
 		col = color.New(attrs...)
@@ -141,8 +141,8 @@ func (h Handler) color(attrs ...color.Attribute) *color.Color {
 	return col
 }
 
-// Options sets the behavior of Handler.
-type Options struct {
+// LogHandlerOptions sets the behavior of Handler.
+type LogHandlerOptions struct {
 	// Level is the granularity of Handler.
 	Level slog.Level
 	// Colored specifies whether Handler will output ANSI colors.
@@ -151,8 +151,8 @@ type Options struct {
 	Colored bool
 }
 
-func DefaultOptions() Options {
-	return Options{
+func DefaultHandlerOptions() LogHandlerOptions {
+	return LogHandlerOptions{
 		Level:   slog.LevelInfo,
 		Colored: true,
 	}
