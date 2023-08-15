@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/livingsilver94/backee/privileged"
+	"github.com/livingsilver94/backee/installer/privileged"
 )
 
 func TestDestMessageCodec(t *testing.T) {
