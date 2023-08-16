@@ -14,7 +14,7 @@ func TestReplaceServiceVar(t *testing.T) {
 
 	s := "this test prints {{var2}}"
 	const expected = "this test prints value2"
-	obtained, err := repl.ReplaceToString(s)
+	obtained, err := repl.ReplaceStringToString(s)
 	if err != nil {
 		t.Fatalf("expected nil error. Got %v", err)
 	}
@@ -27,7 +27,7 @@ func TestReplaceNoVar(t *testing.T) {
 	vars := createVariables("var1", "value1", "var2", "value2")
 	repl := installer.NewReplacer(serviceName, vars)
 
-	_, err := repl.ReplaceToString("{{thisKey}} is not among variables")
+	_, err := repl.ReplaceStringToString("{{thisKey}} is not among variables")
 	if !errors.Is(err, installer.ErrNoVariable) {
 		t.Fatalf("expected %v. Got %v", installer.ErrNoVariable, err)
 	}
@@ -40,7 +40,7 @@ func TestReplaceExtraVar(t *testing.T) {
 
 	s := "this test prints {{extra}}"
 	const expected = "this test prints extraValue"
-	obtained, err := repl.ReplaceToString(s)
+	obtained, err := repl.ReplaceStringToString(s)
 	if err != nil {
 		t.Fatalf("expected nil error. Got %v", err)
 	}
@@ -57,7 +57,7 @@ func TestReplaceParentVar(t *testing.T) {
 
 	s := "this test prints {{parent.var1}}"
 	const expected = "this test prints parentValue1"
-	obtained, err := repl.ReplaceToString(s)
+	obtained, err := repl.ReplaceStringToString(s)
 	if err != nil {
 		t.Fatalf("expected nil error. Got %v", err)
 	}

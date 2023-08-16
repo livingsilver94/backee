@@ -68,7 +68,7 @@ func CopyPerformer(repo Repository, repl Replacer) Performer {
 func writeFiles(files map[string]backee.FilePath, baseDir string, repl Replacer, wr fileWriter) error {
 	var dstBuf strings.Builder
 	for src, dst := range files {
-		err := repl.Replace(dst.Path, &dstBuf)
+		err := repl.ReplaceString(dst.Path, &dstBuf)
 		if err != nil {
 			return err
 		}
@@ -110,7 +110,7 @@ func Finalizer(repl Replacer) Performer {
 		}
 		log.Info("Running finalizer script")
 		var script strings.Builder
-		err := repl.Replace(*srv.Finalize, &script)
+		err := repl.ReplaceString(*srv.Finalize, &script)
 		if err != nil {
 			return err
 		}
@@ -179,7 +179,7 @@ func (w *copyWriter) writeDestination(dst string) error {
 	}
 	defer dstFile.Close()
 	buff := bufio.NewWriter(dstFile)
-	err = w.repl.Replace(w.srcContent, buff)
+	err = w.repl.ReplaceString(w.srcContent, buff)
 	if err != nil {
 		return err
 	}
