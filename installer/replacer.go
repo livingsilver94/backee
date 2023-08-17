@@ -28,12 +28,15 @@ func (t Replacer) Replace(r io.Reader, w io.Writer) error {
 	scanner := bufio.NewScanner(r)
 	scanner.Split(greedyTagSplitter)
 	for scanner.Scan() {
-		fasttemplate.ExecuteFunc(
+		_, err := fasttemplate.ExecuteFunc(
 			scanner.Text(),
 			backee.VarOpenTag, backee.VarCloseTag,
 			w,
 			t.replaceTag,
 		)
+		if err != nil {
+			return err
+		}
 	}
 	return scanner.Err()
 }
