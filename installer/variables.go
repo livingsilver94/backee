@@ -12,16 +12,16 @@ var (
 	ErrNoVariable = errors.New("variable not found")
 )
 
-type serviceName = string
-
 type Variables struct {
-	resolved map[serviceName]value
+	Common map[string]string
+
+	resolved map[string]value
 	stores   map[backee.VarKind]VarStore
 }
 
 func NewVariables() Variables {
 	return Variables{
-		resolved: make(map[serviceName]value),
+		resolved: make(map[string]value),
 		stores:   make(map[backee.VarKind]VarStore),
 	}
 }
@@ -100,7 +100,11 @@ func (c Variables) Get(service, key string) (string, error) {
 	}
 	variable, ok := val.vars[key]
 	if !ok {
-		return "", ErrNoVariable
+		v, ok := c.Common[key]
+		if !ok {
+			return "", ErrNoVariable
+		}
+		variable = v
 	}
 	return variable, nil
 }
@@ -109,16 +113,12 @@ func (c Variables) Length() int {
 	return len(c.resolved)
 }
 
-func (c Variables) GetAll(service string) map[string]string {
-	return c.resolved[service].vars
-}
-
 func (c Variables) RegisterStore(kind backee.VarKind, store VarStore) {
 	c.stores[kind] = store
 }
 
 type value struct {
-	parents []serviceName
+	parents []string
 	vars    map[string]string
 }
 

@@ -3,6 +3,7 @@ package cli
 import (
 	"errors"
 	"os"
+	"strings"
 
 	"github.com/livingsilver94/backee"
 	"github.com/livingsilver94/backee/installer"
@@ -40,12 +41,7 @@ func (in *install) Run() error {
 	if err != nil {
 		return err
 	}
-	opts := make([]installer.Option, 0, 1)
-	if in.KeepassXC.Path != "" {
-		store := secret.NewKeepassXC(in.KeepassXC.Path, in.KeepassXC.Password)
-		opts = append(opts, installer.WithStore("keepassxc", store))
-	}
-	ins := installer.New(rep, opts...)
+	ins := in.installer(rep)
 	for _, s := range srv {
 		err := ins.Install(s)
 		if err != nil {
@@ -72,4 +68,26 @@ func (in *install) services(rep repo.FSRepo) ([]*backee.Service, error) {
 		services = append(services, srv)
 	}
 	return services, nil
+}
+
+func (in *install) installer(rep repo.FSRepo) installer.Installer {
+	vrs := installer.NewVariables()
+	vrs.Common = envVars()
+	if in.KeepassXC.Path != "" {
+		kee := secret.NewKeepassXC(in.KeepassXC.Path, in.KeepassXC.Password)
+		vrs.RegisterStore(backee.VarKind("keepassxc"), kee)
+	}
+
+	return installer.New(rep, installer.WithVariables(vrs))
+}
+
+// envVars returns a map of environment variables.
+func envVars() map[string]string {
+	env := os.Environ()
+	envMap := make(map[string]string, len(env))
+	for _, keyVal := range env {
+		key, val, _ := strings.Cut(keyVal, "=")
+		envMap[key] = val
+	}
+	return envMap
 }

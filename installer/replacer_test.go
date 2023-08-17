@@ -37,8 +37,8 @@ func TestReplaceNoVar(t *testing.T) {
 
 func TestReplaceExtraVar(t *testing.T) {
 	vars := createVariables("var1", "value1", "var2", "value2")
+	vars.Common = map[string]string{"extra": "extraValue"}
 	repl := installer.NewReplacer(serviceName, vars)
-	repl.ExtraVars = map[string]string{"extra": "extraValue"}
 
 	s := "this test prints {{extra}}"
 	const expected = "this test prints extraValue"

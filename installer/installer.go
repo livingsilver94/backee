@@ -2,7 +2,6 @@ package installer
 
 import (
 	"os"
-	"strings"
 
 	"github.com/livingsilver94/backee"
 	"github.com/livingsilver94/backee/repo"
@@ -83,7 +82,6 @@ func (inst *Installer) installSingle(srv *backee.Service, ilist *InstallList) er
 		return err
 	}
 	repl := NewReplacer(srv.Name, inst.variables)
-	repl.ExtraVars = environMap()
 	performers := []Performer{
 		Setup,
 		PackageInstaller,
@@ -118,19 +116,8 @@ func (inst *Installer) cacheVars(srv *backee.Service) error {
 
 type Option func(*Installer)
 
-func WithStore(kind backee.VarKind, store VarStore) Option {
+func WithVariables(v Variables) Option {
 	return func(i *Installer) {
-		i.variables.RegisterStore(kind, store)
+		i.variables = v
 	}
-}
-
-// environMap returns a map of environment variables.
-func environMap() map[string]string {
-	env := os.Environ()
-	envMap := make(map[string]string, len(env))
-	for _, keyVal := range env {
-		key, val, _ := strings.Cut(keyVal, "=")
-		envMap[key] = val
-	}
-	return envMap
 }

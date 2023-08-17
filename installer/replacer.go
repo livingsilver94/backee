@@ -11,8 +11,6 @@ import (
 )
 
 type Replacer struct {
-	ExtraVars map[string]string
-
 	serviceName string
 	variables   Variables
 }
@@ -64,10 +62,7 @@ func (t Replacer) replaceTag(w io.Writer, varName string) (int, error) {
 		// Matched a variable local to the backee.
 		return w.Write([]byte(val))
 	}
-	if val, ok := t.ExtraVars[varName]; ok {
-		// Matched an extra variable.
-		return w.Write([]byte(val))
-	}
+
 	parentName, parentVar, found := strings.Cut(varName, backee.VarParentSep)
 	if !found {
 		return 0, ErrNoVariable
