@@ -1,7 +1,9 @@
 package installer_test
 
 import (
+	"bytes"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/livingsilver94/backee"
@@ -63,5 +65,32 @@ func TestReplaceParentVar(t *testing.T) {
 	}
 	if obtained != expected {
 		t.Fatalf("expected string %q. Got %q", expected, obtained)
+	}
+}
+
+func TestReplaceReader(t *testing.T) {
+	tests := []struct {
+		in   string
+		vars map[string]string
+		out  string
+	}{
+		{"aaaaa", map[string]string{"var1": "value1"}, "aaaaa"},
+		{"aaaaa {{var1}}", map[string]string{"var1": "value1"}, "aaaaa value1"},
+	}
+	for _, test := range tests {
+		s := strings.NewReader(test.in)
+		vars := installer.NewVariables()
+		for key, val := range test.vars {
+			vars.Insert("service", key, backee.VarValue{Kind: backee.ClearText, Value: val})
+		}
+		rep := installer.NewReplacer("service", vars)
+		writer := &bytes.Buffer{}
+		err := rep.Replace(s, writer)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if writer.String() != test.out {
+			t.Fatalf("expected string %q. Got %q", test.out, writer.String())
+		}
 	}
 }

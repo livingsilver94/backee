@@ -90,6 +90,9 @@ func greedyTagSplitter(data []byte, atEOF bool) (advance int, token []byte, err 
 		// Read more: we're greedy!
 		return 0, nil, nil
 	}
+	if atEOF && len(data) == 0 {
+		return 0, nil, nil
+	}
 
 	iTag := bytes.LastIndex(data, []byte(backee.VarOpenTag))
 	if iTag < 0 {
