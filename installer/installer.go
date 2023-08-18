@@ -1,8 +1,6 @@
 package installer
 
 import (
-	"os"
-
 	"github.com/livingsilver94/backee"
 	"github.com/livingsilver94/backee/repo"
 	"golang.org/x/exp/slog"
@@ -18,19 +16,17 @@ type VarStore interface {
 	Value(varName string) (varValue string, err error)
 }
 
-const (
-	installedListFilename = "installed.txt"
-)
-
 type Installer struct {
 	repository Repository
 	variables  Variables
+	list       List
 }
 
 func New(repository Repository, options ...Option) Installer {
 	i := Installer{
 		repository: repository,
 		variables:  NewVariables(),
+		list:       NewList(),
 	}
 	for _, option := range options {
 		option(&i)
@@ -39,19 +35,6 @@ func New(repository Repository, options ...Option) Installer {
 }
 
 func (inst *Installer) Install(srv *backee.Service) error {
-	ilistFile, err := os.OpenFile(installedListFilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
-	var list InstallList
-	if err != nil {
-		slog.Error(err.Error() + ". Continuing without populating the installation list")
-		list = NewInstallList(nil)
-	} else {
-		defer ilistFile.Close()
-		list = NewInstallList(ilistFile)
-	}
-	return inst.installHierarchy(srv, &list)
-}
-
-func (inst *Installer) installHierarchy(srv *backee.Service, list *InstallList) error {
 	if srv == nil {
 		return nil
 	}
@@ -62,18 +45,18 @@ func (inst *Installer) installHierarchy(srv *backee.Service, list *InstallList) 
 	}
 	for level := depGraph.Depth() - 1; level >= 0; level-- {
 		for _, dep := range depGraph.Level(level).Slice() {
-			err := inst.installSingle(dep, list)
+			err := inst.installSingle(dep)
 			if err != nil {
 				return err
 			}
 		}
 	}
-	return inst.installSingle(srv, list)
+	return inst.installSingle(srv)
 }
 
-func (inst *Installer) installSingle(srv *backee.Service, ilist *InstallList) error {
+func (inst *Installer) installSingle(srv *backee.Service) error {
 	log := slog.Default().WithGroup(srv.Name)
-	if ilist.Contains(srv.Name) {
+	if inst.list.Contains(srv.Name) {
 		log.Info("Already installed")
 		return nil
 	}
@@ -95,7 +78,7 @@ func (inst *Installer) installSingle(srv *backee.Service, ilist *InstallList) er
 			return err
 		}
 	}
-	ilist.Insert(srv.Name)
+	inst.list.Insert(srv.Name)
 	return nil
 }
 
@@ -119,5 +102,11 @@ type Option func(*Installer)
 func WithVariables(v Variables) Option {
 	return func(i *Installer) {
 		i.variables = v
+	}
+}
+
+func WithList(li List) Option {
+	return func(i *Installer) {
+		i.list = li
 	}
 }

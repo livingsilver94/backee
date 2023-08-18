@@ -9,6 +9,7 @@ import (
 	"github.com/livingsilver94/backee/installer"
 	"github.com/livingsilver94/backee/repo"
 	"github.com/livingsilver94/backee/secret"
+	"golang.org/x/exp/slog"
 )
 
 type keepassXC struct {
@@ -25,6 +26,10 @@ type install struct {
 	Services []string `arg:"" optional:"" help:"Services to install. Pass none to install all services in the base directory."`
 }
 
+const (
+	installedListFilename = "installed.txt"
+)
+
 func (in *install) Run() error {
 	if in.Directory == "" {
 		cwd, err := os.Getwd()
@@ -33,6 +38,11 @@ func (in *install) Run() error {
 		}
 		in.Directory = cwd
 	}
+	var fileList *os.File
+	defer func() {
+		fileList.Close()
+	}()
+
 	rep := repo.NewFSRepoVariant(repo.NewOSFS(in.Directory), in.Variant)
 	srv, err := in.services(rep)
 	if err == nil && len(srv) == 0 {
@@ -41,7 +51,7 @@ func (in *install) Run() error {
 	if err != nil {
 		return err
 	}
-	ins := in.installer(rep)
+	ins := in.installer(rep, &fileList)
 	for _, s := range srv {
 		err := ins.Install(s)
 		if err != nil {
@@ -70,7 +80,22 @@ func (in *install) services(rep repo.FSRepo) ([]*backee.Service, error) {
 	return services, nil
 }
 
-func (in *install) installer(rep repo.FSRepo) installer.Installer {
+func (in *install) installer(rep repo.FSRepo, fileList **os.File) installer.Installer {
+	var (
+		list installer.List
+		err  error
+	)
+	*fileList, err = os.OpenFile(installedListFilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		slog.Error(err.Error() + "Failed opening the installation list file. Continuing without populating it")
+		list = installer.NewList()
+	} else {
+		list, err = installer.NewListCached(*fileList)
+		if err != nil {
+			slog.Error("Failed reading previous installation list")
+		}
+	}
+
 	vrs := installer.NewVariables()
 	vrs.Common = envVars()
 	if in.KeepassXC.Path != "" {
@@ -78,7 +103,7 @@ func (in *install) installer(rep repo.FSRepo) installer.Installer {
 		vrs.RegisterStore(backee.VarKind("keepassxc"), kee)
 	}
 
-	return installer.New(rep, installer.WithVariables(vrs))
+	return installer.New(rep, installer.WithVariables(vrs), installer.WithList(list))
 }
 
 // envVars returns a map of environment variables.
