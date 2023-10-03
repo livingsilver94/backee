@@ -5,13 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 
 	"github.com/livingsilver94/backee"
-	"golang.org/x/exp/slog"
 )
 
 type Performer func(*slog.Logger, *backee.Service) error

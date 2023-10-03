@@ -5,10 +5,10 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"time"
 
 	"github.com/fatih/color"
-	"golang.org/x/exp/slog"
 )
 
 // LogHandler is a slog handler with a focus on readability and aesthetics,

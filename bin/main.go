@@ -2,10 +2,10 @@ package main
 
 import (
 	"errors"
+	"log/slog"
 	"os"
 
 	"github.com/livingsilver94/backee/bin/cli"
-	"golang.org/x/exp/slog"
 )
 
 func main() {

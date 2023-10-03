@@ -1,9 +1,10 @@
 package installer
 
 import (
+	"log/slog"
+
 	"github.com/livingsilver94/backee"
 	"github.com/livingsilver94/backee/repo"
-	"golang.org/x/exp/slog"
 )
 
 type Repository interface {

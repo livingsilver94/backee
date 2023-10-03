@@ -2,6 +2,7 @@ package cli
 
 import (
 	"errors"
+	"log/slog"
 	"os"
 	"strings"
 
@@ -9,7 +10,6 @@ import (
 	"github.com/livingsilver94/backee/installer"
 	"github.com/livingsilver94/backee/repo"
 	"github.com/livingsilver94/backee/secret"
-	"golang.org/x/exp/slog"
 )
 
 type keepassXC struct {
