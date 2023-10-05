@@ -1,7 +1,6 @@
 package installer
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -47,7 +46,7 @@ func SymlinkPerformer(repo Repository, repl Replacer) Performer {
 		if err != nil {
 			return err
 		}
-		return writeFiles(srv.Links, linkDir, repl, newSymlinkWriter(log))
+		return writeFiles(srv.Links, linkDir, repl, NewSymlinkWriter(log))
 	}
 }
 
@@ -61,46 +60,8 @@ func CopyPerformer(repo Repository, repl Replacer) Performer {
 		if err != nil {
 			return err
 		}
-		return writeFiles(srv.Copies, dataDir, repl, newCopyWriter(repl))
+		return writeFiles(srv.Copies, dataDir, repl, NewCopyWriter(repl))
 	}
-}
-
-func writeFiles(files map[string]backee.FilePath, baseDir string, repl Replacer, wr fileWriter) error {
-	var dstBuf strings.Builder
-	for src, dst := range files {
-		err := repl.ReplaceString(dst.Path, &dstBuf)
-		if err != nil {
-			return err
-		}
-		err = writeFile(backee.FilePath{Path: dstBuf.String(), Mode: dst.Mode}, filepath.Join(baseDir, src), wr)
-		if err != nil {
-			if !errors.Is(err, fs.ErrPermission) {
-				return err
-			}
-			// TODO: retry with privileged permissions.
-		}
-		dstBuf.Reset()
-	}
-	return nil
-}
-
-func writeFile(dst backee.FilePath, src string, wr fileWriter) error {
-	err := wr.loadSource(src)
-	if err != nil {
-		return err
-	}
-	err = os.MkdirAll(filepath.Dir(dst.Path), 0755)
-	if err != nil {
-		return err
-	}
-	err = wr.writeDestination(dst.Path)
-	if err != nil {
-		return err
-	}
-	if dst.Mode != 0 {
-		return os.Chmod(dst.Path, fs.FileMode(dst.Mode))
-	}
-	return nil
 }
 
 func Finalizer(repl Replacer) Performer {
@@ -116,74 +77,6 @@ func Finalizer(repl Replacer) Performer {
 		}
 		return runScript(script.String())
 	}
-}
-
-type fileWriter interface {
-	loadSource(src string) error
-	writeDestination(dst string) error
-}
-
-type symlinkWriter struct {
-	log *slog.Logger
-
-	src string
-}
-
-func newSymlinkWriter(log *slog.Logger) *symlinkWriter {
-	return &symlinkWriter{
-		log: log,
-	}
-}
-
-func (w *symlinkWriter) loadSource(src string) error {
-	if _, err := os.Stat(src); err != nil { // Check that srcPath exists.
-		return err
-	}
-	w.src = src
-	return nil
-}
-
-func (w *symlinkWriter) writeDestination(dst string) error {
-	err := os.Symlink(w.src, dst)
-	if err != nil {
-		if !errors.Is(err, fs.ErrExist) {
-			return err
-		}
-		w.log.Info("Already exists", "path", dst)
-	}
-	return nil
-}
-
-type copyWriter struct {
-	repl Replacer
-
-	srcContent string
-}
-
-func newCopyWriter(repl Replacer) *copyWriter {
-	return &copyWriter{
-		repl: repl,
-	}
-}
-
-func (w *copyWriter) loadSource(src string) error {
-	content, err := os.ReadFile(src)
-	w.srcContent = string(content)
-	return err
-}
-
-func (w *copyWriter) writeDestination(dst string) error {
-	dstFile, err := os.Create(dst)
-	if err != nil {
-		return err
-	}
-	defer dstFile.Close()
-	buff := bufio.NewWriter(dstFile)
-	err = w.repl.ReplaceString(w.srcContent, buff)
-	if err != nil {
-		return err
-	}
-	return buff.Flush()
 }
 
 func runProcess(name string, arg ...string) error {
