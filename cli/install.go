@@ -6,10 +6,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/livingsilver94/backee"
 	"github.com/livingsilver94/backee/installer"
 	"github.com/livingsilver94/backee/repo"
 	"github.com/livingsilver94/backee/secret"
+	"github.com/livingsilver94/backee/service"
 )
 
 type keepassXC struct {
@@ -61,15 +61,15 @@ func (in *install) Run() error {
 	return nil
 }
 
-func (in *install) services(rep repo.FSRepo) ([]*backee.Service, error) {
+func (in *install) services(rep repo.FSRepo) ([]*service.Service, error) {
 	if len(in.PkgManager) != 0 {
-		backee.DefaultPkgManager = in.PkgManager
+		service.DefaultPkgManager = in.PkgManager
 	}
 
 	if len(in.Services) == 0 {
 		return rep.AllServices()
 	}
-	services := make([]*backee.Service, 0, len(in.Services))
+	services := make([]*service.Service, 0, len(in.Services))
 	for _, name := range in.Services {
 		srv, err := rep.Service(name)
 		if err != nil {
@@ -100,7 +100,7 @@ func (in *install) installer(rep repo.FSRepo, fileList **os.File) installer.Inst
 	vrs.Common = envVars()
 	if in.KeepassXC.Path != "" {
 		kee := secret.NewKeepassXC(in.KeepassXC.Path, in.KeepassXC.Password)
-		vrs.RegisterStore(backee.VarKind("keepassxc"), kee)
+		vrs.RegisterStore(service.VarKind("keepassxc"), kee)
 	}
 
 	return installer.New(rep, installer.WithVariables(vrs), installer.WithList(list))

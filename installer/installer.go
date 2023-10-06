@@ -3,14 +3,14 @@ package installer
 import (
 	"log/slog"
 
-	"github.com/livingsilver94/backee"
 	"github.com/livingsilver94/backee/repo"
+	"github.com/livingsilver94/backee/service"
 )
 
 type Repository interface {
 	DataDir(srvName string) (string, error)
 	LinkDir(srvName string) (string, error)
-	ResolveDeps(srv *backee.Service) (repo.DepGraph, error)
+	ResolveDeps(srv *service.Service) (repo.DepGraph, error)
 }
 
 type VarStore interface {
@@ -35,7 +35,7 @@ func New(repository Repository, options ...Option) Installer {
 	return i
 }
 
-func (inst *Installer) Install(srv *backee.Service) error {
+func (inst *Installer) Install(srv *service.Service) error {
 	if srv == nil {
 		return nil
 	}
@@ -55,7 +55,7 @@ func (inst *Installer) Install(srv *backee.Service) error {
 	return inst.installSingle(srv)
 }
 
-func (inst *Installer) installSingle(srv *backee.Service) error {
+func (inst *Installer) installSingle(srv *service.Service) error {
 	log := slog.Default().WithGroup(srv.Name)
 	if inst.list.Contains(srv.Name) {
 		log.Info("Already installed")
@@ -66,15 +66,15 @@ func (inst *Installer) installSingle(srv *backee.Service) error {
 		return err
 	}
 	repl := NewReplacer(srv.Name, inst.variables)
-	performers := []Performer{
-		Setup,
-		PackageInstaller,
-		SymlinkPerformer(inst.repository, repl),
-		CopyPerformer(inst.repository, repl),
-		Finalizer(repl),
+	steps := []Step{
+		Setup{},
+		OSPackages{},
+		NewSymlinks(inst.repository, repl),
+		NewCopies(inst.repository, repl),
+		NewFinalization(repl),
 	}
-	for _, perf := range performers {
-		err := perf(log, srv)
+	for _, step := range steps {
+		err := step.Run(log, srv)
 		if err != nil {
 			return err
 		}
@@ -83,15 +83,15 @@ func (inst *Installer) installSingle(srv *backee.Service) error {
 	return nil
 }
 
-func (inst *Installer) cacheVars(srv *backee.Service) error {
+func (inst *Installer) cacheVars(srv *service.Service) error {
 	datadir, err := inst.repository.DataDir(srv.Name)
 	if err != nil {
 		return err
 	}
 	err = inst.variables.Insert(
 		srv.Name,
-		backee.VarDatadir,
-		backee.VarValue{Kind: backee.ClearText, Value: datadir})
+		service.VarDatadir,
+		service.VarValue{Kind: service.ClearText, Value: datadir})
 	if err != nil {
 		return err
 	}

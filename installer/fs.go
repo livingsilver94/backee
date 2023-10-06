@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/livingsilver94/backee"
+	"github.com/livingsilver94/backee/service"
 )
 
 type FileWriter interface {
@@ -17,7 +17,7 @@ type FileWriter interface {
 	writeDestination(dst string) error
 }
 
-func WritePath(dst backee.FilePath, src string, wr FileWriter) error {
+func WritePath(dst service.FilePath, src string, wr FileWriter) error {
 	err := wr.loadSource(src)
 	if err != nil {
 		return err
@@ -97,7 +97,7 @@ func (w *CopyWriter) writeDestination(dst string) error {
 	return buff.Flush()
 }
 
-func writeFiles(files map[string]backee.FilePath, baseDir string, repl Replacer, wr FileWriter) error {
+func writeFiles(files map[string]service.FilePath, baseDir string, repl Replacer, wr FileWriter) error {
 	var resolvedDst strings.Builder
 	for srcFile, dstFile := range files {
 		err := repl.ReplaceString(dstFile.Path, &resolvedDst)
@@ -105,7 +105,7 @@ func writeFiles(files map[string]backee.FilePath, baseDir string, repl Replacer,
 			return err
 		}
 		err = WritePath(
-			backee.FilePath{Path: resolvedDst.String(), Mode: dstFile.Mode},
+			service.FilePath{Path: resolvedDst.String(), Mode: dstFile.Mode},
 			filepath.Join(baseDir, srcFile),
 			wr,
 		)

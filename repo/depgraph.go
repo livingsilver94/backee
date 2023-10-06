@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/go-set"
-	"github.com/livingsilver94/backee"
+	"github.com/livingsilver94/backee/service"
 )
 
 // DepGraph is the dependency graph of a service, akin to a family tree.
@@ -26,7 +26,7 @@ const depSetDefaultCap = 10
 
 // Insert inserts srv at level in the dependency graph.
 // Insert panics if level is greater than graph's current depth.
-func (dg *DepGraph) Insert(level int, srv *backee.Service) {
+func (dg *DepGraph) Insert(level int, srv *service.Service) {
 	if level > dg.Depth() {
 		panic(fmt.Sprintf("inserting dep on level %d but level %d does not exist", level, level-1))
 	}
@@ -62,12 +62,12 @@ func (dg *DepGraph) Equal(dg2 DepGraph) bool {
 
 // DepSet is a unique set of services.
 type DepSet struct {
-	*set.HashSet[*backee.Service, string]
+	*set.HashSet[*service.Service, string]
 }
 
 // NewDepSet returns an empty set of services with an initial capacity.
 func NewDepSet(initialCap int) DepSet {
-	return DepSet{set.NewHashSet[*backee.Service, string](initialCap)}
+	return DepSet{set.NewHashSet[*service.Service, string](initialCap)}
 }
 
 // Equal compares the set with another.

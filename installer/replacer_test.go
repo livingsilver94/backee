@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/livingsilver94/backee"
 	"github.com/livingsilver94/backee/installer"
+	"github.com/livingsilver94/backee/service"
 )
 
 func TestReplaceServiceVar(t *testing.T) {
@@ -53,7 +53,7 @@ func TestReplaceExtraVar(t *testing.T) {
 
 func TestReplaceParentVar(t *testing.T) {
 	vars := createVariables("var1", "value1", "var2", "value2")
-	vars.Insert("parent", "var1", backee.VarValue{Kind: backee.ClearText, Value: "parentValue1"})
+	vars.Insert("parent", "var1", service.VarValue{Kind: service.ClearText, Value: "parentValue1"})
 	vars.AddParent(serviceName, "parent")
 	repl := installer.NewReplacer(serviceName, vars)
 
@@ -81,7 +81,7 @@ func TestReplaceReader(t *testing.T) {
 		s := strings.NewReader(test.in)
 		vars := installer.NewVariables()
 		for key, val := range test.vars {
-			vars.Insert("service", key, backee.VarValue{Kind: backee.ClearText, Value: val})
+			vars.Insert("service", key, service.VarValue{Kind: service.ClearText, Value: val})
 		}
 		rep := installer.NewReplacer("service", vars)
 		writer := &bytes.Buffer{}

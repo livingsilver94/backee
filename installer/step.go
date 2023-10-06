@@ -10,16 +10,16 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/livingsilver94/backee"
+	"github.com/livingsilver94/backee/service"
 )
 
 type Step interface {
-	Run(*slog.Logger, *backee.Service) error
+	Run(*slog.Logger, *service.Service) error
 }
 
 type Setup struct{}
 
-func (Setup) Run(log *slog.Logger, srv *backee.Service) error {
+func (Setup) Run(log *slog.Logger, srv *service.Service) error {
 	if srv.Setup == nil || *srv.Setup == "" {
 		return nil
 	}
@@ -29,7 +29,7 @@ func (Setup) Run(log *slog.Logger, srv *backee.Service) error {
 
 type OSPackages struct{}
 
-func (OSPackages) Run(log *slog.Logger, srv *backee.Service) error {
+func (OSPackages) Run(log *slog.Logger, srv *service.Service) error {
 	if len(srv.Packages) == 0 {
 		return nil
 	}
@@ -52,7 +52,7 @@ func NewSymlinks(repo Repository, repl Replacer) Symlinks {
 	}
 }
 
-func (s Symlinks) Run(log *slog.Logger, srv *backee.Service) error {
+func (s Symlinks) Run(log *slog.Logger, srv *service.Service) error {
 	if len(srv.Links) == 0 {
 		return nil
 	}
@@ -76,7 +76,7 @@ func NewCopies(repo Repository, repl Replacer) Copies {
 	}
 }
 
-func (c Copies) Run(log *slog.Logger, srv *backee.Service) error {
+func (c Copies) Run(log *slog.Logger, srv *service.Service) error {
 	if len(srv.Copies) == 0 {
 		return nil
 	}
@@ -98,7 +98,7 @@ func NewFinalization(repl Replacer) Finalization {
 	}
 }
 
-func (f Finalization) Run(log *slog.Logger, srv *backee.Service) error {
+func (f Finalization) Run(log *slog.Logger, srv *service.Service) error {
 	if srv.Finalize == nil || *srv.Finalize == "" {
 		return nil
 	}

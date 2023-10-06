@@ -6,7 +6,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/livingsilver94/backee"
+	"github.com/livingsilver94/backee/service"
 	"github.com/valyala/fasttemplate"
 )
 
@@ -28,7 +28,7 @@ func (t Replacer) Replace(r io.Reader, w io.Writer) error {
 	for scanner.Scan() {
 		_, err := fasttemplate.ExecuteFunc(
 			scanner.Text(),
-			backee.VarOpenTag, backee.VarCloseTag,
+			service.VarOpenTag, service.VarCloseTag,
 			w,
 			t.replaceTag,
 		)
@@ -42,7 +42,7 @@ func (t Replacer) Replace(r io.Reader, w io.Writer) error {
 func (t Replacer) ReplaceString(s string, w io.Writer) error {
 	_, err := fasttemplate.ExecuteFunc(
 		s,
-		backee.VarOpenTag, backee.VarCloseTag,
+		service.VarOpenTag, service.VarCloseTag,
 		w,
 		t.replaceTag,
 	)
@@ -52,18 +52,18 @@ func (t Replacer) ReplaceString(s string, w io.Writer) error {
 func (t Replacer) ReplaceStringToString(s string) (string, error) {
 	return fasttemplate.ExecuteFuncStringWithErr(
 		s,
-		backee.VarOpenTag, backee.VarCloseTag,
+		service.VarOpenTag, service.VarCloseTag,
 		t.replaceTag,
 	)
 }
 
 func (t Replacer) replaceTag(w io.Writer, varName string) (int, error) {
 	if val, err := t.variables.Get(t.serviceName, varName); err == nil {
-		// Matched a variable local to the backee.
+		// Matched a variable local to the service.
 		return w.Write([]byte(val))
 	}
 
-	parentName, parentVar, found := strings.Cut(varName, backee.VarParentSep)
+	parentName, parentVar, found := strings.Cut(varName, service.VarParentSep)
 	if !found {
 		return 0, ErrNoVariable
 	}
@@ -92,12 +92,12 @@ func greedyTagSplitter(data []byte, atEOF bool) (advance int, token []byte, err 
 		return 0, nil, nil
 	}
 
-	iTag := bytes.LastIndex(data, []byte(backee.VarOpenTag))
+	iTag := bytes.LastIndex(data, []byte(service.VarOpenTag))
 	if iTag < 0 {
 		// No tags in this string.
 		return len(data), data, nil
 	}
-	if bytes.Contains(data[iTag+len(backee.VarOpenTag):], []byte(backee.VarCloseTag)) {
+	if bytes.Contains(data[iTag+len(service.VarOpenTag):], []byte(service.VarCloseTag)) {
 		// Tag is correctly closed. Return whole string.
 		return len(data), data, nil
 	}

@@ -5,13 +5,13 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/livingsilver94/backee"
 	"github.com/livingsilver94/backee/installer"
+	"github.com/livingsilver94/backee/service"
 )
 
 func TestAddParent(t *testing.T) {
 	cache := createVariables("key", "val")
-	cache.Insert("parent", "parentKey", backee.VarValue{Kind: backee.ClearText, Value: "parentValue"})
+	cache.Insert("parent", "parentKey", service.VarValue{Kind: service.ClearText, Value: "parentValue"})
 	err := cache.AddParent(serviceName, "parent")
 	if err != nil {
 		t.Fatalf("expected nil error. Got %v", err)
@@ -20,7 +20,7 @@ func TestAddParent(t *testing.T) {
 
 func TestAddParentNoService(t *testing.T) {
 	cache := createVariables("key", "val")
-	cache.Insert("parent", "parentKey", backee.VarValue{Kind: backee.ClearText, Value: "parentValue"})
+	cache.Insert("parent", "parentKey", service.VarValue{Kind: service.ClearText, Value: "parentValue"})
 	err := cache.AddParent("not a service", "parent")
 	if !errors.Is(err, installer.ErrNoService) {
 		t.Fatalf("expected %v error. Got %v", installer.ErrNoService, err)
@@ -29,7 +29,7 @@ func TestAddParentNoService(t *testing.T) {
 
 func TestAddParentNoParent(t *testing.T) {
 	cache := createVariables("key", "val")
-	cache.Insert("parent", "parentKey", backee.VarValue{Kind: backee.ClearText, Value: "parentValue"})
+	cache.Insert("parent", "parentKey", service.VarValue{Kind: service.ClearText, Value: "parentValue"})
 	err := cache.AddParent(serviceName, "not a parent")
 	if !errors.Is(err, installer.ErrNoService) {
 		t.Fatalf("expected %v error. Got %v", installer.ErrNoService, err)
@@ -60,11 +60,11 @@ func (testVarStore) Value(key string) (value string, err error) {
 }
 
 func TestInsertStore(t *testing.T) {
-	const kind backee.VarKind = "testKind"
+	const kind service.VarKind = "testKind"
 
 	cache := installer.NewVariables()
 	cache.RegisterStore(kind, testVarStore{})
-	err := cache.Insert(serviceName, "key", backee.VarValue{Kind: kind, Value: "storeValue"})
+	err := cache.Insert(serviceName, "key", service.VarValue{Kind: kind, Value: "storeValue"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -103,7 +103,7 @@ func TestGetNoVariable(t *testing.T) {
 
 func TestParents(t *testing.T) {
 	cache := createVariables("key", "val")
-	cache.Insert("parent", "parentKey", backee.VarValue{Kind: backee.ClearText, Value: "parentValue"})
+	cache.Insert("parent", "parentKey", service.VarValue{Kind: service.ClearText, Value: "parentValue"})
 	err := cache.AddParent(serviceName, "parent")
 	if err != nil {
 		t.Fatalf("expected nil error. Got %v", err)
@@ -126,7 +126,7 @@ func createVariables(keyVal ...string) installer.Variables {
 	}
 	v := installer.NewVariables()
 	for i := 0; i < len(keyVal)-1; i += 2 {
-		v.Insert(serviceName, keyVal[i], backee.VarValue{Kind: backee.ClearText, Value: keyVal[i+1]})
+		v.Insert(serviceName, keyVal[i], service.VarValue{Kind: service.ClearText, Value: keyVal[i+1]})
 	}
 	return v
 }

@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/livingsilver94/backee/bin/cli"
+	"github.com/livingsilver94/backee/cli"
 )
 
 func main() {

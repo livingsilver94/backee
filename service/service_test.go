@@ -1,17 +1,17 @@
-package backee_test
+package service_test
 
 import (
 	"reflect"
 	"strings"
 	"testing"
 
-	"github.com/livingsilver94/backee"
+	"github.com/livingsilver94/backee/service"
 )
 
 const name = "testName"
 
 func TestParseEmptyDocument(t *testing.T) {
-	srv, err := backee.NewServiceFromYAML(name, []byte("# This is an empty document"))
+	srv, err := service.NewServiceFromYAML(name, []byte("# This is an empty document"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -21,7 +21,7 @@ func TestParseEmptyDocument(t *testing.T) {
 }
 
 func TestParseEmptyDocumentReader(t *testing.T) {
-	srv, err := backee.NewServiceFromYAMLReader(name, strings.NewReader("# This is an empty document"))
+	srv, err := service.NewServiceFromYAMLReader(name, strings.NewReader("# This is an empty document"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -31,13 +31,13 @@ func TestParseEmptyDocumentReader(t *testing.T) {
 }
 
 func TestParseDepends(t *testing.T) {
-	expect := backee.NewDepSetFrom([]string{"service1", "service2"})
+	expect := service.NewDepSetFrom([]string{"service1", "service2"})
 	const doc = `
 depends:
   - service1
   - service2
   - service1`
-	srv, err := backee.NewServiceFromYAML(name, []byte(doc))
+	srv, err := service.NewServiceFromYAML(name, []byte(doc))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -52,7 +52,7 @@ func TestParseSetup(t *testing.T) {
 setup: |
   echo "Test!"
   # Another line.`
-	srv, err := backee.NewServiceFromYAML(name, []byte(doc))
+	srv, err := service.NewServiceFromYAML(name, []byte(doc))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -68,7 +68,7 @@ func TestParsePkgManager(t *testing.T) {
 	expect := []string{"sudo", "apt-get", "install", "-y"}
 	const doc = `
 pkgmanager: ["sudo", "apt-get", "install", "-y"]`
-	srv, err := backee.NewServiceFromYAML(name, []byte(doc))
+	srv, err := service.NewServiceFromYAML(name, []byte(doc))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -84,7 +84,7 @@ packages:
   - nano
   - micro
   - zsh`
-	srv, err := backee.NewServiceFromYAML(name, []byte(doc))
+	srv, err := service.NewServiceFromYAML(name, []byte(doc))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -94,7 +94,7 @@ packages:
 }
 
 func TestParseLinks(t *testing.T) {
-	expect := map[string]backee.FilePath{
+	expect := map[string]service.FilePath{
 		"/my/path/file1": {Path: "/tmp/alias1", Mode: 0o000},
 		"my/path/file2":  {Path: "/tmp/alias2", Mode: 0o755},
 	}
@@ -106,7 +106,7 @@ links:
   my/path/file2:
     path: /tmp/alias2
     mode: 0o755`
-	srv, err := backee.NewServiceFromYAML(name, []byte(doc))
+	srv, err := service.NewServiceFromYAML(name, []byte(doc))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -116,7 +116,7 @@ links:
 }
 
 func TestParseLinksString(t *testing.T) {
-	expect := map[string]backee.FilePath{
+	expect := map[string]service.FilePath{
 		"/my/path/file1": {Path: "/tmp/alias1", Mode: 0644},
 		"my/path/file2":  {Path: "/tmp/alias2", Mode: 0o644},
 	}
@@ -124,7 +124,7 @@ func TestParseLinksString(t *testing.T) {
 links:
   /my/path/file1: /tmp/alias1
   my/path/file2: /tmp/alias2`
-	srv, err := backee.NewServiceFromYAML(name, []byte(doc))
+	srv, err := service.NewServiceFromYAML(name, []byte(doc))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -134,11 +134,11 @@ links:
 }
 
 func TestParseVariables(t *testing.T) {
-	expect := map[string]backee.VarValue{
-		"username":     {Kind: backee.ClearText, Value: "value1"},
-		"password":     {Kind: backee.VarKind("keepassxc"), Value: "dbKey"},
-		"implicitKind": {Kind: backee.ClearText, Value: "value2"},
-		"scalar":       {Kind: backee.ClearText, Value: "value3"},
+	expect := map[string]service.VarValue{
+		"username":     {Kind: service.ClearText, Value: "value1"},
+		"password":     {Kind: service.VarKind("keepassxc"), Value: "dbKey"},
+		"implicitKind": {Kind: service.ClearText, Value: "value2"},
+		"scalar":       {Kind: service.ClearText, Value: "value3"},
 	}
 	const doc = `
 variables:
@@ -151,7 +151,7 @@ variables:
   implicitKind:
     value: value2
   scalar: value3`
-	srv, err := backee.NewServiceFromYAML(name, []byte(doc))
+	srv, err := service.NewServiceFromYAML(name, []byte(doc))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -161,13 +161,13 @@ variables:
 }
 
 func TestParseVariablesString(t *testing.T) {
-	expect := map[string]backee.VarValue{
-		"username": {Kind: backee.ClearText, Value: "value1"},
+	expect := map[string]service.VarValue{
+		"username": {Kind: service.ClearText, Value: "value1"},
 	}
 	const doc = `
 variables:
   username: value1`
-	srv, err := backee.NewServiceFromYAML(name, []byte(doc))
+	srv, err := service.NewServiceFromYAML(name, []byte(doc))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -177,7 +177,7 @@ variables:
 }
 
 func TestParseCopies(t *testing.T) {
-	expect := map[string]backee.FilePath{
+	expect := map[string]service.FilePath{
 		"nginx.conf": {Path: "/etc/nginx/nginx.conf", Mode: 0o000},
 		"config":     {Path: "${HOME}/.ssh/config", Mode: 0o600},
 	}
@@ -189,7 +189,7 @@ copies:
   config:
     path: ${HOME}/.ssh/config
     mode: 0o600`
-	srv, err := backee.NewServiceFromYAML(name, []byte(doc))
+	srv, err := service.NewServiceFromYAML(name, []byte(doc))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -199,7 +199,7 @@ copies:
 }
 
 func TestParseCopiesString(t *testing.T) {
-	expect := map[string]backee.FilePath{
+	expect := map[string]service.FilePath{
 		"/my/path/file1": {Path: "/tmp/alias1", Mode: 0644},
 		"my/path/file2":  {Path: "/tmp/alias2", Mode: 0o644},
 	}
@@ -207,7 +207,7 @@ func TestParseCopiesString(t *testing.T) {
 copies:
   /my/path/file1: /tmp/alias1
   my/path/file2: /tmp/alias2`
-	srv, err := backee.NewServiceFromYAML(name, []byte(doc))
+	srv, err := service.NewServiceFromYAML(name, []byte(doc))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -222,7 +222,7 @@ func TestParseFinalize(t *testing.T) {
 finalize: |
   echo "Test!"
   # Another line.`
-	srv, err := backee.NewServiceFromYAML(name, []byte(doc))
+	srv, err := service.NewServiceFromYAML(name, []byte(doc))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -235,7 +235,7 @@ finalize: |
 }
 
 func TestServiceHash(t *testing.T) {
-	srv := backee.Service{Name: "myName"}
+	srv := service.Service{Name: "myName"}
 	expected := srv.Name
 	obtained := srv.Hash()
 	if obtained != expected {

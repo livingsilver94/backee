@@ -1,4 +1,4 @@
-package backee
+package service
 
 import (
 	"errors"
