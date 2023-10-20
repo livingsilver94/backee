@@ -28,10 +28,10 @@ type arguments struct {
 	Globals
 
 	Install install `cmd:"" default:"withargs"`
-	// Privileged is  a hidden subcommand, not meant to be called by users.
+	// Privilege is  a hidden subcommand, not meant to be called by users.
 	// Instead, Backee will call it in a privileged fork of itself
 	// to perform filesystem operations where administration rights are required.
-	Privileged privileged `cmd:"" hidden:""`
+	Privilege privilege `cmd:"" hidden:""`
 }
 
 func Parse() (*kong.Context, Globals) {

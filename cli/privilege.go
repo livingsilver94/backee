@@ -8,17 +8,17 @@ import (
 	"strconv"
 
 	"github.com/alecthomas/kong"
-	"github.com/livingsilver94/backee/privilege"
+	priv "github.com/livingsilver94/backee/privilege"
 )
 
-type privileged struct {
+type privilege struct {
 	// Pipe is the file interface of the pipe used to
 	// receive instructions from the parent process.
 	Pipe *os.File `arg:"" type:"fd" help:"file descriptor of the pipe from which to receive instructions."`
 }
 
-func (p privileged) Run() error {
-	run, err := privilege.ReceiveRunner(p.Pipe)
+func (p privilege) Run() error {
+	run, err := priv.ReceiveRunner(p.Pipe)
 	if err != nil {
 		return err
 	}
