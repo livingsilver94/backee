@@ -67,11 +67,11 @@ func (w *SymlinkWriter) writeDestination(dst string) error {
 }
 
 type CopyWriter struct {
-	repl       Replacer
+	repl       Template
 	srcContent string
 }
 
-func NewCopyWriter(repl Replacer) *CopyWriter {
+func NewCopyWriter(repl Template) *CopyWriter {
 	return &CopyWriter{
 		repl: repl,
 	}
@@ -97,7 +97,7 @@ func (w *CopyWriter) writeDestination(dst string) error {
 	return buff.Flush()
 }
 
-func writeFiles(files map[string]service.FilePath, baseDir string, repl Replacer, wr FileWriter) error {
+func writeFiles(files map[string]service.FilePath, baseDir string, repl Template, wr FileWriter) error {
 	var resolvedDst strings.Builder
 	for srcFile, dstFile := range files {
 		err := repl.ReplaceString(dstFile.Path, &resolvedDst)

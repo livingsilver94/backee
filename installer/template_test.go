@@ -13,7 +13,7 @@ import (
 
 func TestReplaceServiceVar(t *testing.T) {
 	vars := createVariables("var1", "value1", "var2", "value2")
-	repl := installer.NewReplacer(serviceName, vars)
+	repl := installer.NewTemplate(serviceName, vars)
 
 	s := "this test prints {{var2}}"
 	const expected = "this test prints value2"
@@ -28,7 +28,7 @@ func TestReplaceServiceVar(t *testing.T) {
 
 func TestReplaceNoVar(t *testing.T) {
 	vars := createVariables("var1", "value1", "var2", "value2")
-	repl := installer.NewReplacer(serviceName, vars)
+	repl := installer.NewTemplate(serviceName, vars)
 
 	_, err := repl.ReplaceStringToString("{{thisKey}} is not among variables")
 	if !errors.Is(err, repo.ErrNoVariable) {
@@ -39,7 +39,7 @@ func TestReplaceNoVar(t *testing.T) {
 func TestReplaceExtraVar(t *testing.T) {
 	vars := createVariables("var1", "value1", "var2", "value2")
 	vars.Common = map[string]string{"extra": "extraValue"}
-	repl := installer.NewReplacer(serviceName, vars)
+	repl := installer.NewTemplate(serviceName, vars)
 
 	s := "this test prints {{extra}}"
 	const expected = "this test prints extraValue"
@@ -56,7 +56,7 @@ func TestReplaceParentVar(t *testing.T) {
 	vars := createVariables("var1", "value1", "var2", "value2")
 	vars.Insert("parent", "var1", service.VarValue{Kind: service.ClearText, Value: "parentValue1"})
 	vars.AddParent(serviceName, "parent")
-	repl := installer.NewReplacer(serviceName, vars)
+	repl := installer.NewTemplate(serviceName, vars)
 
 	s := "this test prints {{parent.var1}}"
 	const expected = "this test prints parentValue1"
@@ -84,7 +84,7 @@ func TestReplaceReader(t *testing.T) {
 		for key, val := range test.vars {
 			vars.Insert("service", key, service.VarValue{Kind: service.ClearText, Value: val})
 		}
-		rep := installer.NewReplacer("service", vars)
+		rep := installer.NewTemplate("service", vars)
 		writer := &bytes.Buffer{}
 		err := rep.Replace(s, writer)
 		if err != nil {

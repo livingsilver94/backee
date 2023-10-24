@@ -61,7 +61,7 @@ func (inst *Installer) installSingle(srv *service.Service) error {
 	if err != nil {
 		return err
 	}
-	repl := NewReplacer(srv.Name, inst.variables)
+	repl := NewTemplate(srv.Name, inst.variables)
 	steps := []Step{
 		Setup{},
 		OSPackages{},

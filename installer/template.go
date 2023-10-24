@@ -11,19 +11,19 @@ import (
 	"github.com/valyala/fasttemplate"
 )
 
-type Replacer struct {
+type Template struct {
 	serviceName string
 	variables   repo.Variables
 }
 
-func NewReplacer(serviceName string, vars repo.Variables) Replacer {
-	return Replacer{
+func NewTemplate(serviceName string, vars repo.Variables) Template {
+	return Template{
 		serviceName: serviceName,
 		variables:   vars,
 	}
 }
 
-func (t Replacer) Replace(r io.Reader, w io.Writer) error {
+func (t Template) Replace(r io.Reader, w io.Writer) error {
 	scanner := bufio.NewScanner(r)
 	scanner.Split(greedyTagSplitter)
 	for scanner.Scan() {
@@ -40,7 +40,7 @@ func (t Replacer) Replace(r io.Reader, w io.Writer) error {
 	return scanner.Err()
 }
 
-func (t Replacer) ReplaceString(s string, w io.Writer) error {
+func (t Template) ReplaceString(s string, w io.Writer) error {
 	_, err := fasttemplate.ExecuteFunc(
 		s,
 		service.VarOpenTag, service.VarCloseTag,
@@ -50,7 +50,7 @@ func (t Replacer) ReplaceString(s string, w io.Writer) error {
 	return err
 }
 
-func (t Replacer) ReplaceStringToString(s string) (string, error) {
+func (t Template) ReplaceStringToString(s string) (string, error) {
 	return fasttemplate.ExecuteFuncStringWithErr(
 		s,
 		service.VarOpenTag, service.VarCloseTag,
@@ -58,7 +58,7 @@ func (t Replacer) ReplaceStringToString(s string) (string, error) {
 	)
 }
 
-func (t Replacer) replaceTag(w io.Writer, varName string) (int, error) {
+func (t Template) replaceTag(w io.Writer, varName string) (int, error) {
 	if val, err := t.variables.Get(t.serviceName, varName); err == nil {
 		// Matched a variable local to the service.
 		return w.Write([]byte(val))

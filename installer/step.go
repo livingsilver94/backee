@@ -42,10 +42,10 @@ func (OSPackages) Run(log *slog.Logger, srv *service.Service) error {
 
 type Symlinks struct {
 	repo Repository
-	repl Replacer
+	repl Template
 }
 
-func NewSymlinks(repo Repository, repl Replacer) Symlinks {
+func NewSymlinks(repo Repository, repl Template) Symlinks {
 	return Symlinks{
 		repo: repo,
 		repl: repl,
@@ -66,10 +66,10 @@ func (s Symlinks) Run(log *slog.Logger, srv *service.Service) error {
 
 type Copies struct {
 	repo Repository
-	repl Replacer
+	repl Template
 }
 
-func NewCopies(repo Repository, repl Replacer) Copies {
+func NewCopies(repo Repository, repl Template) Copies {
 	return Copies{
 		repo: repo,
 		repl: repl,
@@ -89,10 +89,10 @@ func (c Copies) Run(log *slog.Logger, srv *service.Service) error {
 }
 
 type Finalization struct {
-	repl Replacer
+	repl Template
 }
 
-func NewFinalization(repl Replacer) Finalization {
+func NewFinalization(repl Template) Finalization {
 	return Finalization{
 		repl: repl,
 	}
