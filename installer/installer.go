@@ -13,20 +13,16 @@ type Repository interface {
 	ResolveDeps(srv *service.Service) (repo.DepGraph, error)
 }
 
-type VarStore interface {
-	Value(varName string) (varValue string, err error)
-}
-
 type Installer struct {
 	repository Repository
-	variables  Variables
+	variables  repo.Variables
 	list       List
 }
 
 func New(repository Repository, options ...Option) Installer {
 	i := Installer{
 		repository: repository,
-		variables:  NewVariables(),
+		variables:  repo.NewVariables(),
 		list:       NewList(),
 	}
 	for _, option := range options {
@@ -100,7 +96,7 @@ func (inst *Installer) cacheVars(srv *service.Service) error {
 
 type Option func(*Installer)
 
-func WithVariables(v Variables) Option {
+func WithVariables(v repo.Variables) Option {
 	return func(i *Installer) {
 		i.variables = v
 	}

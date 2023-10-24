@@ -6,16 +6,17 @@ import (
 	"io"
 	"strings"
 
+	"github.com/livingsilver94/backee/repo"
 	"github.com/livingsilver94/backee/service"
 	"github.com/valyala/fasttemplate"
 )
 
 type Replacer struct {
 	serviceName string
-	variables   Variables
+	variables   repo.Variables
 }
 
-func NewReplacer(serviceName string, vars Variables) Replacer {
+func NewReplacer(serviceName string, vars repo.Variables) Replacer {
 	return Replacer{
 		serviceName: serviceName,
 		variables:   vars,
@@ -65,7 +66,7 @@ func (t Replacer) replaceTag(w io.Writer, varName string) (int, error) {
 
 	parentName, parentVar, found := strings.Cut(varName, service.VarParentSep)
 	if !found {
-		return 0, ErrNoVariable
+		return 0, repo.ErrNoVariable
 	}
 	parents, _ := t.variables.Parents(t.serviceName)
 	for _, parent := range parents {
@@ -78,7 +79,7 @@ func (t Replacer) replaceTag(w io.Writer, varName string) (int, error) {
 		}
 		break
 	}
-	return 0, ErrNoVariable
+	return 0, repo.ErrNoVariable
 }
 
 // greedyTagSplitter is a bufio.SplitFunc that reads

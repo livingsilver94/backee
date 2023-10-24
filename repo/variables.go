@@ -1,4 +1,4 @@
-package installer
+package repo
 
 import (
 	"errors"
@@ -11,6 +11,10 @@ var (
 	ErrNoService  = errors.New("service not found")
 	ErrNoVariable = errors.New("variable not found")
 )
+
+type VarStore interface {
+	Value(varName string) (varValue string, err error)
+}
 
 type Variables struct {
 	Common map[string]string

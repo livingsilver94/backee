@@ -96,7 +96,7 @@ func (in *install) installer(rep repo.FSRepo, fileList **os.File) installer.Inst
 		}
 	}
 
-	vrs := installer.NewVariables()
+	vrs := repo.NewVariables()
 	vrs.Common = envVars()
 	if in.KeepassXC.Path != "" {
 		kee := secret.NewKeepassXC(in.KeepassXC.Path, in.KeepassXC.Password)

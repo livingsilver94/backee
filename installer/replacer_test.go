@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/livingsilver94/backee/installer"
+	"github.com/livingsilver94/backee/repo"
 	"github.com/livingsilver94/backee/service"
 )
 
@@ -30,8 +31,8 @@ func TestReplaceNoVar(t *testing.T) {
 	repl := installer.NewReplacer(serviceName, vars)
 
 	_, err := repl.ReplaceStringToString("{{thisKey}} is not among variables")
-	if !errors.Is(err, installer.ErrNoVariable) {
-		t.Fatalf("expected %v. Got %v", installer.ErrNoVariable, err)
+	if !errors.Is(err, repo.ErrNoVariable) {
+		t.Fatalf("expected %v. Got %v", repo.ErrNoVariable, err)
 	}
 }
 
@@ -79,7 +80,7 @@ func TestReplaceReader(t *testing.T) {
 	}
 	for _, test := range tests {
 		s := strings.NewReader(test.in)
-		vars := installer.NewVariables()
+		vars := repo.NewVariables()
 		for key, val := range test.vars {
 			vars.Insert("service", key, service.VarValue{Kind: service.ClearText, Value: val})
 		}
@@ -93,4 +94,17 @@ func TestReplaceReader(t *testing.T) {
 			t.Fatalf("expected string %q. Got %q", test.out, writer.String())
 		}
 	}
+}
+
+const serviceName = "service1"
+
+func createVariables(keyVal ...string) repo.Variables {
+	if len(keyVal)%2 != 0 {
+		panic("keys and values must be pairs")
+	}
+	v := repo.NewVariables()
+	for i := 0; i < len(keyVal)-1; i += 2 {
+		v.Insert(serviceName, keyVal[i], service.VarValue{Kind: service.ClearText, Value: keyVal[i+1]})
+	}
+	return v
 }

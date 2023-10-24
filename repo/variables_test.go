@@ -1,11 +1,11 @@
-package installer_test
+package repo_test
 
 import (
 	"errors"
 	"reflect"
 	"testing"
 
-	"github.com/livingsilver94/backee/installer"
+	"github.com/livingsilver94/backee/repo"
 	"github.com/livingsilver94/backee/service"
 )
 
@@ -22,8 +22,8 @@ func TestAddParentNoService(t *testing.T) {
 	cache := createVariables("key", "val")
 	cache.Insert("parent", "parentKey", service.VarValue{Kind: service.ClearText, Value: "parentValue"})
 	err := cache.AddParent("not a service", "parent")
-	if !errors.Is(err, installer.ErrNoService) {
-		t.Fatalf("expected %v error. Got %v", installer.ErrNoService, err)
+	if !errors.Is(err, repo.ErrNoService) {
+		t.Fatalf("expected %v error. Got %v", repo.ErrNoService, err)
 	}
 }
 
@@ -31,8 +31,8 @@ func TestAddParentNoParent(t *testing.T) {
 	cache := createVariables("key", "val")
 	cache.Insert("parent", "parentKey", service.VarValue{Kind: service.ClearText, Value: "parentValue"})
 	err := cache.AddParent(serviceName, "not a parent")
-	if !errors.Is(err, installer.ErrNoService) {
-		t.Fatalf("expected %v error. Got %v", installer.ErrNoService, err)
+	if !errors.Is(err, repo.ErrNoService) {
+		t.Fatalf("expected %v error. Got %v", repo.ErrNoService, err)
 	}
 }
 
@@ -62,7 +62,7 @@ func (testVarStore) Value(key string) (value string, err error) {
 func TestInsertStore(t *testing.T) {
 	const kind service.VarKind = "testKind"
 
-	cache := installer.NewVariables()
+	cache := repo.NewVariables()
 	cache.RegisterStore(kind, testVarStore{})
 	err := cache.Insert(serviceName, "key", service.VarValue{Kind: kind, Value: "storeValue"})
 	if err != nil {
@@ -86,18 +86,18 @@ func TestGet(t *testing.T) {
 }
 
 func TestGetNoService(t *testing.T) {
-	cache := installer.NewVariables()
+	cache := repo.NewVariables()
 	_, err := cache.Get(serviceName, "key")
-	if !errors.Is(err, installer.ErrNoService) {
-		t.Fatalf("expected error %v. Got %v", installer.ErrNoService, err)
+	if !errors.Is(err, repo.ErrNoService) {
+		t.Fatalf("expected error %v. Got %v", repo.ErrNoService, err)
 	}
 }
 
 func TestGetNoVariable(t *testing.T) {
 	cache := createVariables("key", "value")
 	_, err := cache.Get(serviceName, "absent key")
-	if !errors.Is(err, installer.ErrNoVariable) {
-		t.Fatalf("expected error %v. Got %v", installer.ErrNoVariable, err)
+	if !errors.Is(err, repo.ErrNoVariable) {
+		t.Fatalf("expected error %v. Got %v", repo.ErrNoVariable, err)
 	}
 }
 
@@ -120,11 +120,11 @@ func TestParents(t *testing.T) {
 
 const serviceName = "service1"
 
-func createVariables(keyVal ...string) installer.Variables {
+func createVariables(keyVal ...string) repo.Variables {
 	if len(keyVal)%2 != 0 {
 		panic("keys and values must be pairs")
 	}
-	v := installer.NewVariables()
+	v := repo.NewVariables()
 	for i := 0; i < len(keyVal)-1; i += 2 {
 		v.Insert(serviceName, keyVal[i], service.VarValue{Kind: service.ClearText, Value: keyVal[i+1]})
 	}
