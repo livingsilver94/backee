@@ -12,7 +12,7 @@ import (
 
 func TestService(t *testing.T) {
 	fs := fstest.MapFS{"srv/service.yaml": &fstest.MapFile{}}
-	rep := repo.NewFSRepo(fs)
+	rep := repo.NewFS(fs)
 	expected := &service.Service{Name: "srv", PkgManager: service.DefaultPkgManager}
 	obtained, err := rep.Service("srv")
 	if err != nil {
@@ -30,7 +30,7 @@ func TestAllServices(t *testing.T) {
 		"emptydir":          &fstest.MapFile{Mode: fs.ModeDir},
 		"garbage.txt":       &fstest.MapFile{Data: []byte("please ignore"), Mode: 0644},
 	}
-	rep := repo.NewFSRepo(fs)
+	rep := repo.NewFS(fs)
 	expected := []*service.Service{
 		{Name: "srv1", PkgManager: service.DefaultPkgManager},
 		{Name: "srv2", PkgManager: service.DefaultPkgManager}}
@@ -58,7 +58,7 @@ func TestResolveDeps(t *testing.T) {
 		Name:    "srv",
 		Depends: &deps,
 	}
-	rep := repo.NewFSRepo(fs)
+	rep := repo.NewFS(fs)
 
 	expected := repo.NewDepGraph(2)
 	expected.Insert(0, &service.Service{Name: "lvl1-1"})

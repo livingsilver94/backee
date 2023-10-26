@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/livingsilver94/backee/repo"
 	"github.com/livingsilver94/backee/service"
 )
 
@@ -41,11 +42,11 @@ func (OSPackages) Run(log *slog.Logger, srv *service.Service) error {
 }
 
 type Symlinks struct {
-	repo Repository
+	repo repo.Repo
 	repl Template
 }
 
-func NewSymlinks(repo Repository, repl Template) Symlinks {
+func NewSymlinks(repo repo.Repo, repl Template) Symlinks {
 	return Symlinks{
 		repo: repo,
 		repl: repl,
@@ -65,11 +66,11 @@ func (s Symlinks) Run(log *slog.Logger, srv *service.Service) error {
 }
 
 type Copies struct {
-	repo Repository
+	repo repo.Repo
 	repl Template
 }
 
-func NewCopies(repo Repository, repl Template) Copies {
+func NewCopies(repo repo.Repo, repl Template) Copies {
 	return Copies{
 		repo: repo,
 		repl: repl,

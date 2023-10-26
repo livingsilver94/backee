@@ -7,19 +7,13 @@ import (
 	"github.com/livingsilver94/backee/service"
 )
 
-type Repository interface {
-	DataDir(srvName string) (string, error)
-	LinkDir(srvName string) (string, error)
-	ResolveDeps(srv *service.Service) (repo.DepGraph, error)
-}
-
 type Installer struct {
-	repository Repository
+	repository repo.Repo
 	variables  repo.Variables
 	list       List
 }
 
-func New(repository Repository, options ...Option) Installer {
+func New(repository repo.Repo, options ...Option) Installer {
 	i := Installer{
 		repository: repository,
 		variables:  repo.NewVariables(),
