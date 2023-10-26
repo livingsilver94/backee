@@ -16,6 +16,7 @@ type VarStore interface {
 	Value(varName string) (varValue string, err error)
 }
 
+// Variables resolves and caches services' variables.
 type Variables struct {
 	Common map[string]string
 
@@ -34,26 +35,26 @@ func NewVariables() Variables {
 // That hints the two services are tied together and it may be useful to
 // Get parent's variables as well when Getting srv's variables.
 // AddParent returns ErrNoService if srv or parent does not exist.
-func (c Variables) AddParent(srv, parent string) error {
-	val, ok := c.resolved[srv]
+func (vars Variables) AddParent(srv, parent string) error {
+	val, ok := vars.resolved[srv]
 	if !ok {
 		return ErrNoService
 	}
-	if _, ok := c.resolved[parent]; !ok {
+	if _, ok := vars.resolved[parent]; !ok {
 		return ErrNoService
 	}
 	val.parents = append(val.parents, parent)
-	c.resolved[srv] = val
+	vars.resolved[srv] = val
 	return nil
 }
 
 // Insert saves value for a service named srv under key.
 // If the value is not clear text, it is resolved immediately and then cached.
 // If key is already present for srv, Insert is no-op.
-func (c Variables) Insert(srv, key string, value service.VarValue) error {
-	switch _, err := c.Get(srv, key); err {
+func (vars Variables) Insert(srv, key string, value service.VarValue) error {
+	switch _, err := vars.Get(srv, key); err {
 	case ErrNoService:
-		c.resolved[srv] = newValue()
+		vars.resolved[srv] = newValue()
 	case ErrNoVariable:
 		break
 	default:
@@ -63,7 +64,7 @@ func (c Variables) Insert(srv, key string, value service.VarValue) error {
 	if kind := value.Kind; kind == service.ClearText {
 		v = value.Value
 	} else {
-		store, ok := c.stores[kind]
+		store, ok := vars.stores[kind]
 		if !ok {
 			return fmt.Errorf("no variable store registered for kind %q", kind)
 		}
@@ -73,13 +74,13 @@ func (c Variables) Insert(srv, key string, value service.VarValue) error {
 			return err
 		}
 	}
-	c.resolved[srv].vars[key] = v
+	vars.resolved[srv].vars[key] = v
 	return nil
 }
 
-func (c Variables) InsertMany(srv string, values map[string]service.VarValue) error {
+func (vars Variables) InsertMany(srv string, values map[string]service.VarValue) error {
 	for key, value := range values {
-		err := c.Insert(srv, key, value)
+		err := vars.Insert(srv, key, value)
 		if err != nil {
 			return err
 		}
@@ -89,22 +90,22 @@ func (c Variables) InsertMany(srv string, values map[string]service.VarValue) er
 
 // Parents returns the parent list of srv.
 // If srv does not exist, ErrNoService is returned.
-func (c Variables) Parents(srv string) ([]string, error) {
-	val, ok := c.resolved[srv]
+func (vars Variables) Parents(srv string) ([]string, error) {
+	val, ok := vars.resolved[srv]
 	if !ok {
 		return nil, ErrNoService
 	}
 	return val.parents, nil
 }
 
-func (c Variables) Get(service, key string) (string, error) {
-	val, ok := c.resolved[service]
+func (vars Variables) Get(service, key string) (string, error) {
+	val, ok := vars.resolved[service]
 	if !ok {
 		return "", ErrNoService
 	}
 	variable, ok := val.vars[key]
 	if !ok {
-		v, ok := c.Common[key]
+		v, ok := vars.Common[key]
 		if !ok {
 			return "", ErrNoVariable
 		}
@@ -113,12 +114,12 @@ func (c Variables) Get(service, key string) (string, error) {
 	return variable, nil
 }
 
-func (c Variables) Length() int {
-	return len(c.resolved)
+func (vars Variables) Length() int {
+	return len(vars.resolved)
 }
 
-func (c Variables) RegisterStore(kind service.VarKind, store VarStore) {
-	c.stores[kind] = store
+func (vars Variables) RegisterStore(kind service.VarKind, store VarStore) {
+	vars.stores[kind] = store
 }
 
 type value struct {
