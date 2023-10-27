@@ -52,7 +52,7 @@ func (inst *Installer) installSingle(srv *service.Service) error {
 		log.Info("Already installed")
 		return nil
 	}
-	err := inst.cacheVars(srv)
+	err := inst.variables.InsertMany(srv.Name, srv.Variables)
 	if err != nil {
 		return err
 	}
@@ -72,21 +72,6 @@ func (inst *Installer) installSingle(srv *service.Service) error {
 	}
 	inst.list.Insert(srv.Name)
 	return nil
-}
-
-func (inst *Installer) cacheVars(srv *service.Service) error {
-	datadir, err := inst.repository.DataDir(srv.Name)
-	if err != nil {
-		return err
-	}
-	err = inst.variables.Insert(
-		srv.Name,
-		service.VarDatadir,
-		service.VarValue{Kind: service.ClearText, Value: datadir})
-	if err != nil {
-		return err
-	}
-	return inst.variables.InsertMany(srv.Name, srv.Variables)
 }
 
 type Option func(*Installer)
