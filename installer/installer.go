@@ -19,6 +19,7 @@ func New(repository repo.Repo, options ...Option) Installer {
 		variables:  repo.NewVariables(),
 		list:       NewList(),
 	}
+	i.variables.RegisterSolver(service.Datadir, repo.NewDatadirSolver(repository))
 	for _, option := range options {
 		option(&i)
 	}
@@ -90,9 +91,17 @@ func (inst *Installer) cacheVars(srv *service.Service) error {
 
 type Option func(*Installer)
 
-func WithVariables(v repo.Variables) Option {
+func WithCommonVars(vars map[string]string) Option {
 	return func(i *Installer) {
-		i.variables = v
+		i.variables.Common = vars
+	}
+}
+
+func WithVarSolvers(solvs map[service.VarKind]repo.VarSolver) Option {
+	return func(i *Installer) {
+		for kind, solv := range solvs {
+			i.variables.RegisterSolver(kind, solv)
+		}
 	}
 }
 

@@ -96,14 +96,18 @@ func (in *install) installer(rep repo.FS, fileList **os.File) installer.Installe
 		}
 	}
 
-	vrs := repo.NewVariables()
-	vrs.Common = envVars()
+	opts := []installer.Option{
+		installer.WithCommonVars(envVars()),
+		installer.WithList(list),
+	}
 	if in.KeepassXC.Path != "" {
 		kee := secret.NewKeepassXC(in.KeepassXC.Path, in.KeepassXC.Password)
-		vrs.RegisterSolver(service.VarKind("keepassxc"), kee)
+		opts = append(
+			opts,
+			installer.WithVarSolvers(map[service.VarKind]repo.VarSolver{"keepassxc": kee}),
+		)
 	}
-
-	return installer.New(rep, installer.WithVariables(vrs), installer.WithList(list))
+	return installer.New(rep, opts...)
 }
 
 // envVars returns a map of environment variables.
