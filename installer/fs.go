@@ -37,7 +37,7 @@ func WritePath(dst service.FilePath, src string, wr FileWriter) error {
 }
 
 func WritePathPrivileged(dst service.FilePath, src string, wr FileWriter) error {
-	return privilege.Run(privilegedPathWriter{dst: dst, src: src, wr: wr})
+	return privilege.Run(privilegedPathWriter{Dst: dst, Src: src, Wr: wr})
 }
 
 func RegisterPrivilegedTypes() {
@@ -106,11 +106,11 @@ func (w *CopyWriter) writeDestination(dst string) error {
 }
 
 type privilegedPathWriter struct {
-	dst service.FilePath
-	src string
-	wr  FileWriter
+	Dst service.FilePath
+	Src string
+	Wr  FileWriter
 }
 
 func (p privilegedPathWriter) Run() error {
-	return WritePath(p.dst, p.src, p.wr)
+	return WritePath(p.Dst, p.Src, p.Wr)
 }
