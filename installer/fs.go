@@ -122,7 +122,14 @@ func writeFiles(files map[string]service.FilePath, baseDir string, repl Template
 			if !errors.Is(err, fs.ErrPermission) {
 				return err
 			}
-			// TODO: retry with privileged permissions.
+			err = WritePathPrivileged(
+				service.FilePath{Path: resolvedDst.String(), Mode: dstFile.Mode},
+				filepath.Join(baseDir, srcFile),
+				wr,
+			)
+			if err != nil {
+				return err
+			}
 		}
 		resolvedDst.Reset()
 	}
