@@ -41,7 +41,8 @@ func WritePathPrivileged(dst service.FilePath, src string, wr FileWriter) error 
 }
 
 func RegisterPrivilegedTypes() {
-	privilege.RegisterRunner(privilegedPathWriter{})
+	privilege.RegisterInterfaceImpl(CopyWriter{})
+	privilege.RegisterInterfaceImpl(privilegedPathWriter{})
 }
 
 type SymlinkWriter struct {

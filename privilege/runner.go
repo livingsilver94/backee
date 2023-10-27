@@ -9,8 +9,8 @@ type Runner interface {
 	Run() error
 }
 
-func RegisterRunner(r Runner) {
-	gob.Register(r)
+func RegisterInterfaceImpl(impl any) {
+	gob.Register(impl)
 }
 
 func SendRunner(dst io.Writer, r Runner) error {
