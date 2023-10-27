@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/livingsilver94/backee/privilege"
 	"github.com/livingsilver94/backee/service"
 )
 
@@ -34,6 +35,14 @@ func WritePath(dst service.FilePath, src string, wr FileWriter) error {
 		return os.Chmod(dst.Path, fs.FileMode(dst.Mode))
 	}
 	return nil
+}
+
+func WritePathPrivileged(dst service.FilePath, src string, wr FileWriter) error {
+	return privilege.Run(privilegedPathWriter{dst: dst, src: src, wr: wr})
+}
+
+func RegisterPrivilegedTypes() {
+	privilege.RegisterRunner(privilegedPathWriter{})
 }
 
 type SymlinkWriter struct {
@@ -118,4 +127,14 @@ func writeFiles(files map[string]service.FilePath, baseDir string, repl Template
 		resolvedDst.Reset()
 	}
 	return nil
+}
+
+type privilegedPathWriter struct {
+	dst service.FilePath
+	src string
+	wr  FileWriter
+}
+
+func (p privilegedPathWriter) Run() error {
+	return WritePath(p.dst, p.src, p.wr)
 }

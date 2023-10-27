@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/alecthomas/kong"
+	"github.com/livingsilver94/backee/installer"
 	priv "github.com/livingsilver94/backee/privilege"
 )
 
@@ -18,6 +19,7 @@ type privilege struct {
 }
 
 func (p privilege) Run() error {
+	installer.RegisterPrivilegedTypes()
 	run, err := priv.ReceiveRunner(p.Pipe)
 	if err != nil {
 		return err
