@@ -43,7 +43,7 @@ func (in *install) Run() error {
 		fileList.Close()
 	}()
 
-	rep := repo.NewFSRepoVariant(repo.NewOSFS(in.Directory), in.Variant)
+	rep := repo.NewFSVariant(repo.NewOSFS(in.Directory), in.Variant)
 	srv, err := in.services(rep)
 	if err == nil && len(srv) == 0 {
 		err = errors.New("no services found")
@@ -61,7 +61,7 @@ func (in *install) Run() error {
 	return nil
 }
 
-func (in *install) services(rep repo.FSRepo) ([]*service.Service, error) {
+func (in *install) services(rep repo.FS) ([]*service.Service, error) {
 	if len(in.PkgManager) != 0 {
 		service.DefaultPkgManager = in.PkgManager
 	}
@@ -80,7 +80,7 @@ func (in *install) services(rep repo.FSRepo) ([]*service.Service, error) {
 	return services, nil
 }
 
-func (in *install) installer(rep repo.FSRepo, fileList **os.File) installer.Installer {
+func (in *install) installer(rep repo.FS, fileList **os.File) installer.Installer {
 	var (
 		list installer.List
 		err  error
