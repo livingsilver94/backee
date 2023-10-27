@@ -40,30 +40,28 @@ type Service struct {
 	Finalize   *string             `yaml:"finalize"`
 }
 
-func NewServiceFromYAML(name string, yml []byte) (*Service, error) {
-	var srv Service
-	err := yaml.Unmarshal(yml, &srv)
-	if err != nil {
-		return nil, err
+func New(name string) *Service {
+	return &Service{
+		Name: name,
+		Variables: map[string]VarValue{
+			VarDatadir: {Kind: Datadir},
+		},
+		PkgManager: DefaultPkgManager,
 	}
-	srv.Name = name
-	if srv.PkgManager == nil {
-		srv.PkgManager = DefaultPkgManager
-	}
-	return &srv, nil
 }
 
-func NewServiceFromYAMLReader(name string, rd io.Reader) (*Service, error) {
-	var srv Service
-	err := yaml.NewDecoder(rd).Decode(&srv)
-	if err != nil && !errors.Is(err, io.EOF) {
-		return nil, err
+func NewFromYAML(name string, yml []byte) (*Service, error) {
+	srv := New(name)
+	return srv, yaml.Unmarshal(yml, srv)
+}
+
+func NewFromYAMLReader(name string, rd io.Reader) (*Service, error) {
+	srv := New(name)
+	err := yaml.NewDecoder(rd).Decode(srv)
+	if errors.Is(err, io.EOF) {
+		err = nil
 	}
-	srv.Name = name
-	if srv.PkgManager == nil {
-		srv.PkgManager = DefaultPkgManager
-	}
-	return &srv, nil
+	return srv, err
 }
 
 func (srv *Service) Hash() string {
@@ -127,6 +125,7 @@ type VarKind string
 
 const (
 	ClearText VarKind = "cleartext"
+	Datadir   VarKind = "datadir"
 )
 
 type VarValue struct {

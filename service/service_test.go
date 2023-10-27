@@ -11,7 +11,7 @@ import (
 const name = "testName"
 
 func TestParseEmptyDocument(t *testing.T) {
-	srv, err := service.NewServiceFromYAML(name, []byte("# This is an empty document"))
+	srv, err := service.NewFromYAML(name, []byte("# This is an empty document"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -21,7 +21,7 @@ func TestParseEmptyDocument(t *testing.T) {
 }
 
 func TestParseEmptyDocumentReader(t *testing.T) {
-	srv, err := service.NewServiceFromYAMLReader(name, strings.NewReader("# This is an empty document"))
+	srv, err := service.NewFromYAMLReader(name, strings.NewReader("# This is an empty document"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -37,7 +37,7 @@ depends:
   - service1
   - service2
   - service1`
-	srv, err := service.NewServiceFromYAML(name, []byte(doc))
+	srv, err := service.NewFromYAML(name, []byte(doc))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -52,7 +52,7 @@ func TestParseSetup(t *testing.T) {
 setup: |
   echo "Test!"
   # Another line.`
-	srv, err := service.NewServiceFromYAML(name, []byte(doc))
+	srv, err := service.NewFromYAML(name, []byte(doc))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -68,7 +68,7 @@ func TestParsePkgManager(t *testing.T) {
 	expect := []string{"sudo", "apt-get", "install", "-y"}
 	const doc = `
 pkgmanager: ["sudo", "apt-get", "install", "-y"]`
-	srv, err := service.NewServiceFromYAML(name, []byte(doc))
+	srv, err := service.NewFromYAML(name, []byte(doc))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -84,7 +84,7 @@ packages:
   - nano
   - micro
   - zsh`
-	srv, err := service.NewServiceFromYAML(name, []byte(doc))
+	srv, err := service.NewFromYAML(name, []byte(doc))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -106,7 +106,7 @@ links:
   my/path/file2:
     path: /tmp/alias2
     mode: 0o755`
-	srv, err := service.NewServiceFromYAML(name, []byte(doc))
+	srv, err := service.NewFromYAML(name, []byte(doc))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -124,7 +124,7 @@ func TestParseLinksString(t *testing.T) {
 links:
   /my/path/file1: /tmp/alias1
   my/path/file2: /tmp/alias2`
-	srv, err := service.NewServiceFromYAML(name, []byte(doc))
+	srv, err := service.NewFromYAML(name, []byte(doc))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -135,10 +135,11 @@ links:
 
 func TestParseVariables(t *testing.T) {
 	expect := map[string]service.VarValue{
-		"username":     {Kind: service.ClearText, Value: "value1"},
-		"password":     {Kind: service.VarKind("keepassxc"), Value: "dbKey"},
-		"implicitKind": {Kind: service.ClearText, Value: "value2"},
-		"scalar":       {Kind: service.ClearText, Value: "value3"},
+		"username":         {Kind: service.ClearText, Value: "value1"},
+		"password":         {Kind: service.VarKind("keepassxc"), Value: "dbKey"},
+		"implicitKind":     {Kind: service.ClearText, Value: "value2"},
+		"scalar":           {Kind: service.ClearText, Value: "value3"},
+		service.VarDatadir: {Kind: service.Datadir},
 	}
 	const doc = `
 variables:
@@ -151,7 +152,7 @@ variables:
   implicitKind:
     value: value2
   scalar: value3`
-	srv, err := service.NewServiceFromYAML(name, []byte(doc))
+	srv, err := service.NewFromYAML(name, []byte(doc))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -162,12 +163,13 @@ variables:
 
 func TestParseVariablesString(t *testing.T) {
 	expect := map[string]service.VarValue{
-		"username": {Kind: service.ClearText, Value: "value1"},
+		"username":         {Kind: service.ClearText, Value: "value1"},
+		service.VarDatadir: {Kind: service.Datadir},
 	}
 	const doc = `
 variables:
   username: value1`
-	srv, err := service.NewServiceFromYAML(name, []byte(doc))
+	srv, err := service.NewFromYAML(name, []byte(doc))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -189,7 +191,7 @@ copies:
   config:
     path: ${HOME}/.ssh/config
     mode: 0o600`
-	srv, err := service.NewServiceFromYAML(name, []byte(doc))
+	srv, err := service.NewFromYAML(name, []byte(doc))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -207,7 +209,7 @@ func TestParseCopiesString(t *testing.T) {
 copies:
   /my/path/file1: /tmp/alias1
   my/path/file2: /tmp/alias2`
-	srv, err := service.NewServiceFromYAML(name, []byte(doc))
+	srv, err := service.NewFromYAML(name, []byte(doc))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -222,7 +224,7 @@ func TestParseFinalize(t *testing.T) {
 finalize: |
   echo "Test!"
   # Another line.`
-	srv, err := service.NewServiceFromYAML(name, []byte(doc))
+	srv, err := service.NewFromYAML(name, []byte(doc))
 	if err != nil {
 		t.Fatal(err)
 	}
