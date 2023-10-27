@@ -13,7 +13,7 @@ import (
 func TestService(t *testing.T) {
 	fs := fstest.MapFS{"srv/service.yaml": &fstest.MapFile{}}
 	rep := repo.NewFS(fs)
-	expected := &service.Service{Name: "srv", PkgManager: service.DefaultPkgManager}
+	expected := service.New("srv")
 	obtained, err := rep.Service("srv")
 	if err != nil {
 		t.Fatal(err)
@@ -32,8 +32,9 @@ func TestAllServices(t *testing.T) {
 	}
 	rep := repo.NewFS(fs)
 	expected := []*service.Service{
-		{Name: "srv1", PkgManager: service.DefaultPkgManager},
-		{Name: "srv2", PkgManager: service.DefaultPkgManager}}
+		service.New("srv1"),
+		service.New("srv2"),
+	}
 	obtained, err := rep.AllServices()
 	if err != nil {
 		t.Fatal(err)

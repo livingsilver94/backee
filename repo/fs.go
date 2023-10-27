@@ -53,7 +53,7 @@ func (repo FS) Service(name string) (*service.Service, error) {
 		return nil, err
 	}
 	defer file.Close()
-	return service.NewServiceFromYAMLReader(name, file)
+	return service.NewFromYAMLReader(name, file)
 }
 
 // AllServices returns all services in the filesystem.
