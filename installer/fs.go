@@ -7,7 +7,6 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/livingsilver94/backee/privilege"
 	"github.com/livingsilver94/backee/service"
@@ -104,36 +103,6 @@ func (w *CopyWriter) writeDestination(dst string) error {
 		return err
 	}
 	return buff.Flush()
-}
-
-func writeFiles(files map[string]service.FilePath, baseDir string, repl Template, wr FileWriter) error {
-	var resolvedDst strings.Builder
-	for srcFile, dstFile := range files {
-		err := repl.ReplaceString(dstFile.Path, &resolvedDst)
-		if err != nil {
-			return err
-		}
-		err = WritePath(
-			service.FilePath{Path: resolvedDst.String(), Mode: dstFile.Mode},
-			filepath.Join(baseDir, srcFile),
-			wr,
-		)
-		if err != nil {
-			if !errors.Is(err, fs.ErrPermission) {
-				return err
-			}
-			err = WritePathPrivileged(
-				service.FilePath{Path: resolvedDst.String(), Mode: dstFile.Mode},
-				filepath.Join(baseDir, srcFile),
-				wr,
-			)
-			if err != nil {
-				return err
-			}
-		}
-		resolvedDst.Reset()
-	}
-	return nil
 }
 
 type privilegedPathWriter struct {

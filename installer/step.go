@@ -119,6 +119,40 @@ func runProcess(name string, arg ...string) error {
 	return cmd.Run()
 }
 
+func writeFiles(files map[string]service.FilePath, baseDir string, repl Template, wr FileWriter) error {
+	var resolvedDst strings.Builder
+	for srcFile, dstFile := range files {
+		err := repl.ReplaceString(dstFile.Path, &resolvedDst)
+		if err != nil {
+			return err
+		}
+		err = writePath(
+			service.FilePath{Path: resolvedDst.String(), Mode: dstFile.Mode},
+			filepath.Join(baseDir, srcFile),
+			wr,
+		)
+		if err != nil {
+			return err
+		}
+		resolvedDst.Reset()
+	}
+	return nil
+}
+
+func writePath(dst service.FilePath, src string, wr FileWriter) error {
+	err := WritePath(dst, src, wr)
+	if err != nil {
+		if !errors.Is(err, fs.ErrPermission) {
+			return err
+		}
+		err = WritePathPrivileged(dst, src, wr)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 type UnixID struct {
 	UID uint32
 	GID uint32
