@@ -63,7 +63,7 @@ func TestInsertStore(t *testing.T) {
 	const kind service.VarKind = "testKind"
 
 	cache := repo.NewVariables()
-	cache.RegisterStore(kind, testVarStore{})
+	cache.RegisterSolver(kind, testVarStore{})
 	err := cache.Insert(serviceName, "key", service.VarValue{Kind: kind, Value: "storeValue"})
 	if err != nil {
 		t.Fatal(err)

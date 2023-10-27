@@ -44,7 +44,7 @@ func New(name string) *Service {
 	return &Service{
 		Name: name,
 		Variables: map[string]VarValue{
-			VarDatadir: {Kind: Datadir},
+			VarDatadir: {Kind: Datadir, Value: name},
 		},
 		PkgManager: DefaultPkgManager,
 	}

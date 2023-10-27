@@ -139,7 +139,7 @@ func TestParseVariables(t *testing.T) {
 		"password":         {Kind: service.VarKind("keepassxc"), Value: "dbKey"},
 		"implicitKind":     {Kind: service.ClearText, Value: "value2"},
 		"scalar":           {Kind: service.ClearText, Value: "value3"},
-		service.VarDatadir: {Kind: service.Datadir},
+		service.VarDatadir: {Kind: service.Datadir, Value: name},
 	}
 	const doc = `
 variables:
@@ -164,7 +164,7 @@ variables:
 func TestParseVariablesString(t *testing.T) {
 	expect := map[string]service.VarValue{
 		"username":         {Kind: service.ClearText, Value: "value1"},
-		service.VarDatadir: {Kind: service.Datadir},
+		service.VarDatadir: {Kind: service.Datadir, Value: name},
 	}
 	const doc = `
 variables:

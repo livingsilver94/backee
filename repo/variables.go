@@ -12,8 +12,22 @@ var (
 	ErrNoVariable = errors.New("variable not found")
 )
 
-type VarStore interface {
+type VarSolver interface {
 	Value(varName string) (varValue string, err error)
+}
+
+type DatadirSolver struct {
+	repo Repo
+}
+
+func NewDatadirSolver(repo Repo) DatadirSolver {
+	return DatadirSolver{
+		repo: repo,
+	}
+}
+
+func (d DatadirSolver) Value(varName string) (varValue string, err error) {
+	return d.repo.DataDir(varName)
 }
 
 // Variables resolves and caches services' variables.
@@ -21,13 +35,13 @@ type Variables struct {
 	Common map[string]string
 
 	resolved map[string]value
-	stores   map[service.VarKind]VarStore
+	solvers  map[service.VarKind]VarSolver
 }
 
 func NewVariables() Variables {
 	return Variables{
 		resolved: make(map[string]value),
-		stores:   make(map[service.VarKind]VarStore),
+		solvers:  make(map[service.VarKind]VarSolver),
 	}
 }
 
@@ -64,12 +78,12 @@ func (vars Variables) Insert(srv, key string, value service.VarValue) error {
 	if kind := value.Kind; kind == service.ClearText {
 		v = value.Value
 	} else {
-		store, ok := vars.stores[kind]
+		solv, ok := vars.solvers[kind]
 		if !ok {
 			return fmt.Errorf("no variable store registered for kind %q", kind)
 		}
 		var err error
-		v, err = store.Value(value.Value)
+		v, err = solv.Value(value.Value)
 		if err != nil {
 			return err
 		}
@@ -118,8 +132,8 @@ func (vars Variables) Length() int {
 	return len(vars.resolved)
 }
 
-func (vars Variables) RegisterStore(kind service.VarKind, store VarStore) {
-	vars.stores[kind] = store
+func (vars Variables) RegisterSolver(kind service.VarKind, solv VarSolver) {
+	vars.solvers[kind] = solv
 }
 
 type value struct {

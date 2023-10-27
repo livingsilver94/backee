@@ -100,7 +100,7 @@ func (in *install) installer(rep repo.FS, fileList **os.File) installer.Installe
 	vrs.Common = envVars()
 	if in.KeepassXC.Path != "" {
 		kee := secret.NewKeepassXC(in.KeepassXC.Path, in.KeepassXC.Password)
-		vrs.RegisterStore(service.VarKind("keepassxc"), kee)
+		vrs.RegisterSolver(service.VarKind("keepassxc"), kee)
 	}
 
 	return installer.New(rep, installer.WithVariables(vrs), installer.WithList(list))
