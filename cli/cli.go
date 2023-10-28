@@ -36,6 +36,6 @@ type arguments struct {
 
 func Parse() (*kong.Context, Globals) {
 	var args arguments
-	ctx := kong.Parse(&args, kong.NamedMapper("fd", kong.MapperFunc(fdMapper)))
+	ctx := kong.Parse(&args)
 	return ctx, args.Globals
 }

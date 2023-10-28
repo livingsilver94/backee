@@ -4,7 +4,6 @@ import (
 	"errors"
 	"os"
 	"os/exec"
-	"strconv"
 )
 
 const (
@@ -29,7 +28,10 @@ func Run(run Runner) error {
 		return err
 	}
 	for _, util := range elevationUtils {
-		cmd := exec.Command(util, path, CLICommand, strconv.FormatUint(uint64(pRead.Fd()), 10))
+		cmd := exec.Command(util, path, CLICommand)
+		cmd.Stdin = pRead
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
 		err = cmd.Run()
 		if err != nil {
 			if errors.Is(err, exec.ErrNotFound) {
