@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/livingsilver94/backee/secret"
+	"github.com/livingsilver94/backee/repo/secret"
 )
 
 func TestKeepassXC(t *testing.T) {

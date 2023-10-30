@@ -8,7 +8,7 @@ import (
 
 	"github.com/livingsilver94/backee/installer"
 	"github.com/livingsilver94/backee/repo"
-	"github.com/livingsilver94/backee/secret"
+	"github.com/livingsilver94/backee/repo/secret"
 	"github.com/livingsilver94/backee/service"
 )
 
