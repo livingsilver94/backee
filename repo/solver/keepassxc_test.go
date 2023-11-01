@@ -1,4 +1,4 @@
-package secret_test
+package solver_test
 
 import (
 	"errors"
@@ -6,11 +6,11 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/livingsilver94/backee/repo/secret"
+	"github.com/livingsilver94/backee/repo/solver"
 )
 
 func TestKeepassXC(t *testing.T) {
-	k := secret.NewKeepassXC(filepath.Join("testdata", "keepassxc.kdbx"), "password")
+	k := solver.NewKeepassXC(filepath.Join("testdata", "keepassxc.kdbx"), "password")
 	val, err := k.Value("test")
 	if err != nil {
 		if errors.Is(err, exec.ErrNotFound) {

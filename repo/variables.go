@@ -16,20 +16,6 @@ type VarSolver interface {
 	Value(varName string) (varValue string, err error)
 }
 
-type DatadirSolver struct {
-	repo Repo
-}
-
-func NewDatadirSolver(repo Repo) DatadirSolver {
-	return DatadirSolver{
-		repo: repo,
-	}
-}
-
-func (d DatadirSolver) Value(varName string) (varValue string, err error) {
-	return d.repo.DataDir(varName)
-}
-
 // Variables resolves and caches services' variables.
 type Variables struct {
 	Common map[string]string

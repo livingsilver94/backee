@@ -4,6 +4,7 @@ import (
 	"log/slog"
 
 	"github.com/livingsilver94/backee/repo"
+	"github.com/livingsilver94/backee/repo/solver"
 	"github.com/livingsilver94/backee/service"
 )
 
@@ -19,7 +20,7 @@ func New(repository repo.Repo, options ...Option) Installer {
 		variables:  repo.NewVariables(),
 		list:       NewList(),
 	}
-	i.variables.RegisterSolver(service.Datadir, repo.NewDatadirSolver(repository))
+	i.variables.RegisterSolver(service.Datadir, solver.NewDatadir(repository))
 	for _, option := range options {
 		option(&i)
 	}

@@ -8,7 +8,7 @@ import (
 
 	"github.com/livingsilver94/backee/installer"
 	"github.com/livingsilver94/backee/repo"
-	"github.com/livingsilver94/backee/repo/secret"
+	"github.com/livingsilver94/backee/repo/solver"
 	"github.com/livingsilver94/backee/service"
 )
 
@@ -101,7 +101,7 @@ func (in *install) installer(rep repo.FS, fileList **os.File) installer.Installe
 		installer.WithList(list),
 	}
 	if in.KeepassXC.Path != "" {
-		kee := secret.NewKeepassXC(in.KeepassXC.Path, in.KeepassXC.Password)
+		kee := solver.NewKeepassXC(in.KeepassXC.Path, in.KeepassXC.Password)
 		opts = append(
 			opts,
 			installer.WithVarSolvers(map[service.VarKind]repo.VarSolver{"keepassxc": kee}),
