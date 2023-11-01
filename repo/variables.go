@@ -1,6 +1,8 @@
 package repo
 
 import (
+	"bytes"
+	"encoding/gob"
 	"errors"
 	"fmt"
 
@@ -43,7 +45,7 @@ func (vars Variables) AddParent(srv, parent string) error {
 	if _, ok := vars.resolved[parent]; !ok {
 		return ErrNoService
 	}
-	val.parents = append(val.parents, parent)
+	val.Parents = append(val.Parents, parent)
 	vars.resolved[srv] = val
 	return nil
 }
@@ -51,30 +53,30 @@ func (vars Variables) AddParent(srv, parent string) error {
 // Insert saves value for a service named srv under key.
 // If the value is not clear text, it is resolved immediately and then cached.
 // If key is already present for srv, Insert is no-op.
-func (vars Variables) Insert(srv, key string, value service.VarValue) error {
+func (vars Variables) Insert(srv, key string, val service.VarValue) error {
 	switch _, err := vars.Get(srv, key); err {
 	case ErrNoService:
-		vars.resolved[srv] = newValue()
+		vars.resolved[srv] = value{Vars: make(map[string]string)}
 	case ErrNoVariable:
 		break
 	default:
 		return nil
 	}
 	var v string
-	if kind := value.Kind; kind == service.ClearText {
-		v = value.Value
+	if kind := val.Kind; kind == service.ClearText {
+		v = val.Value
 	} else {
 		solv, ok := vars.solvers[kind]
 		if !ok {
 			return fmt.Errorf("no variable store registered for kind %q", kind)
 		}
 		var err error
-		v, err = solv.Value(value.Value)
+		v, err = solv.Value(val.Value)
 		if err != nil {
 			return err
 		}
 	}
-	vars.resolved[srv].vars[key] = v
+	vars.resolved[srv].Vars[key] = v
 	return nil
 }
 
@@ -95,7 +97,7 @@ func (vars Variables) Parents(srv string) ([]string, error) {
 	if !ok {
 		return nil, ErrNoService
 	}
-	return val.parents, nil
+	return val.Parents, nil
 }
 
 func (vars Variables) Get(service, key string) (string, error) {
@@ -103,7 +105,7 @@ func (vars Variables) Get(service, key string) (string, error) {
 	if !ok {
 		return "", ErrNoService
 	}
-	variable, ok := val.vars[key]
+	variable, ok := val.Vars[key]
 	if !ok {
 		v, ok := vars.Common[key]
 		if !ok {
@@ -122,14 +124,35 @@ func (vars Variables) RegisterSolver(kind service.VarKind, solv VarSolver) {
 	vars.solvers[kind] = solv
 }
 
-type value struct {
-	parents []string
-	vars    map[string]string
+func (vars Variables) GobEncode() ([]byte, error) {
+	buf := &bytes.Buffer{}
+	enc := gob.NewEncoder(buf)
+	err := enc.Encode(vars.Common)
+	if err != nil {
+		return nil, err
+	}
+	err = enc.Encode(vars.resolved)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }
 
-func newValue() value {
-	return value{
-		parents: make([]string, 0),
-		vars:    make(map[string]string),
+func (vars *Variables) GobDecode(data []byte) error {
+	*vars = NewVariables()
+	dec := gob.NewDecoder(bytes.NewReader(data))
+	err := dec.Decode(&vars.Common)
+	if err != nil {
+		return err
 	}
+	err = dec.Decode(&vars.resolved)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type value struct {
+	Parents []string
+	Vars    map[string]string
 }

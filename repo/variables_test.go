@@ -118,6 +118,26 @@ func TestParents(t *testing.T) {
 	}
 }
 
+func TestGobCodec(t *testing.T) {
+	expected := createVariables("key", "val")
+	expected.Common = map[string]string{
+		"common1:": "value1",
+	}
+
+	data, err := expected.GobEncode()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var result repo.Variables
+	err = result.GobDecode(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(result, expected) {
+		t.Fatalf("expected decoded variables %#v. Got %#v", expected, result)
+	}
+}
+
 const serviceName = "service1"
 
 func createVariables(keyVal ...string) repo.Variables {
