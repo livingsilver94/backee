@@ -119,7 +119,7 @@ func runProcess(name string, arg ...string) error {
 	return cmd.Run()
 }
 
-func writeFiles(files map[string]service.FilePath, baseDir string, repl Template, wr FileWriter) error {
+func writeFiles(files map[string]service.FilePath, baseDir string, repl Template, wr PrivilegedFileWriter) error {
 	var resolvedDst strings.Builder
 	for srcFile, dstFile := range files {
 		err := repl.ReplaceString(dstFile.Path, &resolvedDst)
@@ -139,7 +139,7 @@ func writeFiles(files map[string]service.FilePath, baseDir string, repl Template
 	return nil
 }
 
-func writePath(dst service.FilePath, src string, wr FileWriter) error {
+func writePath(dst service.FilePath, src string, wr PrivilegedFileWriter) error {
 	err := WritePath(dst, src, wr)
 	if err != nil {
 		if !errors.Is(err, fs.ErrPermission) {

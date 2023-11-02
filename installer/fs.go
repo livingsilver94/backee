@@ -2,6 +2,8 @@ package installer
 
 import (
 	"bufio"
+	"bytes"
+	"encoding/gob"
 	"errors"
 	"io/fs"
 	"log/slog"
@@ -15,6 +17,11 @@ import (
 type FileWriter interface {
 	loadSource(src string) error
 	writeDestination(dst string) error
+}
+
+type PrivilegedFileWriter interface {
+	FileWriter
+	gob.GobEncoder
 }
 
 func WritePath(dst service.FilePath, src string, wr FileWriter) error {
@@ -36,7 +43,7 @@ func WritePath(dst service.FilePath, src string, wr FileWriter) error {
 	return nil
 }
 
-func WritePathPrivileged(dst service.FilePath, src string, wr FileWriter) error {
+func WritePathPrivileged(dst service.FilePath, src string, wr PrivilegedFileWriter) error {
 	return privilege.Run(privilegedPathWriter{Dst: dst, Src: src, Wr: wr})
 }
 
@@ -86,6 +93,33 @@ func NewCopyWriter(repl Template) *CopyWriter {
 	}
 }
 
+func (w *CopyWriter) GobEncode() ([]byte, error) {
+	buf := &bytes.Buffer{}
+	enc := gob.NewEncoder(buf)
+	err := enc.Encode(w.repl)
+	if err != nil {
+		return nil, err
+	}
+	err = enc.Encode(w.srcContent)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
+func (w *CopyWriter) GobDecode(data []byte) error {
+	dec := gob.NewDecoder(bytes.NewReader(data))
+	err := dec.Decode(&w.repl)
+	if err != nil {
+		return err
+	}
+	err = dec.Decode(&w.srcContent)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (w *CopyWriter) loadSource(src string) error {
 	content, err := os.ReadFile(src)
 	w.srcContent = string(content)
@@ -109,7 +143,7 @@ func (w *CopyWriter) writeDestination(dst string) error {
 type privilegedPathWriter struct {
 	Dst service.FilePath
 	Src string
-	Wr  FileWriter
+	Wr  PrivilegedFileWriter
 }
 
 func (p privilegedPathWriter) Run() error {
