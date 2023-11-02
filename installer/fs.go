@@ -13,6 +13,12 @@ import (
 	"github.com/livingsilver94/backee/service"
 )
 
+func init() {
+	privilege.RegisterInterfaceImpl(SymlinkWriter{})
+	privilege.RegisterInterfaceImpl(CopyWriter{})
+	privilege.RegisterInterfaceImpl(privilegedPathWriter{})
+}
+
 type FileWriter interface {
 	loadSource(src string) error
 	writeDestination(dst string) error
@@ -45,12 +51,6 @@ func WritePath(dst service.FilePath, src string, wr FileWriter) error {
 func WritePathPrivileged(dst service.FilePath, src string, wr PrivilegedFileWriter) error {
 	var r privilege.Runner = privilegedPathWriter{Dst: dst, Src: src, Wr: &wr}
 	return privilege.Run(r)
-}
-
-func RegisterPrivilegedTypes() {
-	privilege.RegisterInterfaceImpl(SymlinkWriter{})
-	privilege.RegisterInterfaceImpl(CopyWriter{})
-	privilege.RegisterInterfaceImpl(privilegedPathWriter{})
 }
 
 type SymlinkWriter struct {
