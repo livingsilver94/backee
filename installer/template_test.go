@@ -3,6 +3,7 @@ package installer_test
 import (
 	"bytes"
 	"errors"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -93,6 +94,23 @@ func TestReplaceReader(t *testing.T) {
 		if writer.String() != test.out {
 			t.Fatalf("expected string %q. Got %q", test.out, writer.String())
 		}
+	}
+}
+
+func TestGobCodec(t *testing.T) {
+	expected := installer.NewTemplate(serviceName, createVariables("var1", "value1"))
+
+	data, err := expected.GobEncode()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var result installer.Template
+	err = result.GobDecode(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(result, expected) {
+		t.Fatalf("expected decoded template %#v. Got %#v", expected, result)
 	}
 }
 

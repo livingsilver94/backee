@@ -145,6 +145,12 @@ func (vars *Variables) GobDecode(data []byte) error {
 	if err != nil {
 		return err
 	}
+	if len(vars.Common) == 0 {
+		// gob allocates an empty map even if we encoded a nil map.
+		// We want to replicate the behavior of NewVariables, so if
+		// gob allocated an empty map, we reset it to nil.
+		vars.Common = nil
+	}
 	err = dec.Decode(&vars.resolved)
 	if err != nil {
 		return err

@@ -3,6 +3,7 @@ package installer
 import (
 	"bufio"
 	"bytes"
+	"encoding/gob"
 	"io"
 	"strings"
 
@@ -56,6 +57,33 @@ func (t Template) ReplaceStringToString(s string) (string, error) {
 		service.VarOpenTag, service.VarCloseTag,
 		t.replaceTag,
 	)
+}
+
+func (t Template) GobEncode() ([]byte, error) {
+	buf := &bytes.Buffer{}
+	enc := gob.NewEncoder(buf)
+	err := enc.Encode(t.serviceName)
+	if err != nil {
+		return nil, err
+	}
+	err = enc.Encode(t.variables)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
+func (t *Template) GobDecode(data []byte) error {
+	dec := gob.NewDecoder(bytes.NewReader(data))
+	err := dec.Decode(&t.serviceName)
+	if err != nil {
+		return err
+	}
+	err = dec.Decode(&t.variables)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (t Template) replaceTag(w io.Writer, varName string) (int, error) {
