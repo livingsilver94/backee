@@ -14,7 +14,7 @@ func RegisterInterfaceImpl(impl any) {
 }
 
 func SendRunner(dst io.Writer, r Runner) error {
-	return gob.NewEncoder(dst).Encode(r)
+	return gob.NewEncoder(dst).Encode(&r)
 }
 
 func ReceiveRunner(src io.Reader) (Runner, error) {
