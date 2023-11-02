@@ -6,7 +6,6 @@ import (
 	"encoding/gob"
 	"errors"
 	"io/fs"
-	"log/slog"
 	"os"
 	"path/filepath"
 
@@ -48,19 +47,36 @@ func WritePathPrivileged(dst service.FilePath, src string, wr PrivilegedFileWrit
 }
 
 func RegisterPrivilegedTypes() {
+	privilege.RegisterInterfaceImpl(SymlinkWriter{})
 	privilege.RegisterInterfaceImpl(CopyWriter{})
 	privilege.RegisterInterfaceImpl(privilegedPathWriter{})
 }
 
 type SymlinkWriter struct {
-	log     *slog.Logger
 	srcPath string
 }
 
-func NewSymlinkWriter(log *slog.Logger) *SymlinkWriter {
-	return &SymlinkWriter{
-		log: log,
+func NewSymlinkWriter() *SymlinkWriter {
+	return &SymlinkWriter{}
+}
+
+func (w *SymlinkWriter) GobEncode() ([]byte, error) {
+	buf := &bytes.Buffer{}
+	enc := gob.NewEncoder(buf)
+	err := enc.Encode(w.srcPath)
+	if err != nil {
+		return nil, err
 	}
+	return buf.Bytes(), nil
+}
+
+func (w *SymlinkWriter) GobDecode(data []byte) error {
+	dec := gob.NewDecoder(bytes.NewReader(data))
+	err := dec.Decode(&w.srcPath)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (w *SymlinkWriter) loadSource(src string) error {
@@ -77,9 +93,23 @@ func (w *SymlinkWriter) writeDestination(dst string) error {
 		if !errors.Is(err, fs.ErrExist) {
 			return err
 		}
-		w.log.Info("Already exists", "path", dst)
+		eq, errEq := w.isSymlinkEqual(dst)
+		if errEq != nil {
+			return errEq
+		}
+		if !eq {
+			return err
+		}
 	}
 	return nil
+}
+
+func (w *SymlinkWriter) isSymlinkEqual(dst string) (bool, error) {
+	eq, err := filepath.EvalSymlinks(dst)
+	if err != nil {
+		return false, err
+	}
+	return eq == w.srcPath, nil
 }
 
 type CopyWriter struct {

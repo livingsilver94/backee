@@ -62,7 +62,7 @@ func (s Symlinks) Run(log *slog.Logger, srv *service.Service) error {
 	if err != nil {
 		return err
 	}
-	return writeFiles(srv.Links, linkDir, s.repl, NewSymlinkWriter(log))
+	return writeFiles(srv.Links, linkDir, s.repl, NewSymlinkWriter())
 }
 
 type Copies struct {
