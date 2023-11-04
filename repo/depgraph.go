@@ -15,7 +15,7 @@ type DepGraph struct {
 	graph []DepSet
 }
 
-// NewDepGraph returns an empty DepGraph with an initial depth capacity.
+// NewDepGraph returns an empty DepGraph with an initial capacity.
 func NewDepGraph(initalDepthCap int) DepGraph {
 	return DepGraph{
 		graph: make([]DepSet, 0, initalDepthCap),

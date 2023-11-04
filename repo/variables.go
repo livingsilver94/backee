@@ -10,16 +10,23 @@ import (
 )
 
 var (
-	ErrNoService  = errors.New("service not found")
+	// ErrNoService is returned when no Service could be found.
+	ErrNoService = errors.New("service not found")
+	// ErrNoVariable is returned when no variable name could be found.
 	ErrNoVariable = errors.New("variable not found")
 )
 
+// VarSolver resolves the intermediate value of variables.
 type VarSolver interface {
+	// Value resolves the intermediate value
+	// of varName or returns an error.
 	Value(varName string) (varValue string, err error)
 }
 
 // Variables resolves and caches services' variables.
 type Variables struct {
+	// Common is an optional collection of variables that services
+	// might have in common. It is initially nil.
 	Common map[string]string
 
 	resolved map[string]value
@@ -80,6 +87,7 @@ func (vars Variables) Insert(srv, key string, val service.VarValue) error {
 	return nil
 }
 
+// InsertMany is a convenience method to Insert multiple values.
 func (vars Variables) InsertMany(srv string, values map[string]service.VarValue) error {
 	for key, value := range values {
 		err := vars.Insert(srv, key, value)
@@ -100,6 +108,9 @@ func (vars Variables) Parents(srv string) ([]string, error) {
 	return val.Parents, nil
 }
 
+// Get returns the value of a Service's variable, previously cached via Insert.
+// If srv does not exist, ErrNoService is returned.
+// If key does not exist, ErrNoVariable is returned.
 func (vars Variables) Get(service, key string) (string, error) {
 	val, ok := vars.resolved[service]
 	if !ok {
@@ -116,14 +127,17 @@ func (vars Variables) Get(service, key string) (string, error) {
 	return variable, nil
 }
 
+// Length returns how many variables were cached.
 func (vars Variables) Length() int {
 	return len(vars.resolved)
 }
 
+// RegisterSolver registers a VarSolver for a VarKind.
 func (vars Variables) RegisterSolver(kind service.VarKind, solv VarSolver) {
 	vars.solvers[kind] = solv
 }
 
+// GobEncode implements the gob.GobEncoder interface.
 func (vars Variables) GobEncode() ([]byte, error) {
 	buf := &bytes.Buffer{}
 	enc := gob.NewEncoder(buf)
@@ -138,6 +152,7 @@ func (vars Variables) GobEncode() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// GobDecode implements the gob.GobDecoder interface.
 func (vars *Variables) GobDecode(data []byte) error {
 	*vars = NewVariables()
 	dec := gob.NewDecoder(bytes.NewReader(data))
