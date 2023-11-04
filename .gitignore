@@ -1,1 +1,5 @@
+.vscode/
 build/
+test/
+
+installed.txt
