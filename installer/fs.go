@@ -14,23 +14,18 @@ import (
 )
 
 func init() {
-	privilege.RegisterInterfaceImpl(SymlinkWriter{})
-	privilege.RegisterInterfaceImpl(CopyWriter{})
+	privilege.RegisterInterfaceImpl(&SymlinkWriter{})
+	privilege.RegisterInterfaceImpl(&CopyWriter{})
 	privilege.RegisterInterfaceImpl(privilegedPathWriter{})
 }
 
 type FileWriter interface {
-	loadSource(src string) error
-	writeDestination(dst string) error
-}
-
-type PrivilegedFileWriter interface {
-	FileWriter
-	gob.GobEncoder
+	LoadSource(src string) error
+	WriteDestination(dst string) error
 }
 
 func WritePath(dst service.FilePath, src string, wr FileWriter) error {
-	err := wr.loadSource(src)
+	err := wr.LoadSource(src)
 	if err != nil {
 		return err
 	}
@@ -38,7 +33,7 @@ func WritePath(dst service.FilePath, src string, wr FileWriter) error {
 	if err != nil {
 		return err
 	}
-	err = wr.writeDestination(dst.Path)
+	err = wr.WriteDestination(dst.Path)
 	if err != nil {
 		return err
 	}
@@ -48,8 +43,8 @@ func WritePath(dst service.FilePath, src string, wr FileWriter) error {
 	return nil
 }
 
-func WritePathPrivileged(dst service.FilePath, src string, wr PrivilegedFileWriter) error {
-	var r privilege.Runner = privilegedPathWriter{Dst: dst, Src: src, Wr: &wr}
+func WritePathPrivileged(dst service.FilePath, src string, wr FileWriter) error {
+	var r privilege.Runner = privilegedPathWriter{Dst: dst, Src: src, Wr: wr}
 	return privilege.Run(r)
 }
 
@@ -80,7 +75,7 @@ func (w *SymlinkWriter) GobDecode(data []byte) error {
 	return nil
 }
 
-func (w *SymlinkWriter) loadSource(src string) error {
+func (w *SymlinkWriter) LoadSource(src string) error {
 	if _, err := os.Stat(src); err != nil { // Check that srcPath exists.
 		return err
 	}
@@ -88,7 +83,7 @@ func (w *SymlinkWriter) loadSource(src string) error {
 	return nil
 }
 
-func (w *SymlinkWriter) writeDestination(dst string) error {
+func (w *SymlinkWriter) WriteDestination(dst string) error {
 	err := os.Symlink(w.srcPath, dst)
 	if err != nil {
 		if !errors.Is(err, fs.ErrExist) {
@@ -151,13 +146,13 @@ func (w *CopyWriter) GobDecode(data []byte) error {
 	return nil
 }
 
-func (w *CopyWriter) loadSource(src string) error {
+func (w *CopyWriter) LoadSource(src string) error {
 	content, err := os.ReadFile(src)
 	w.srcContent = string(content)
 	return err
 }
 
-func (w *CopyWriter) writeDestination(dst string) error {
+func (w *CopyWriter) WriteDestination(dst string) error {
 	dstFile, err := os.Create(dst)
 	if err != nil {
 		return err
@@ -174,9 +169,9 @@ func (w *CopyWriter) writeDestination(dst string) error {
 type privilegedPathWriter struct {
 	Dst service.FilePath
 	Src string
-	Wr  *PrivilegedFileWriter
+	Wr  FileWriter
 }
 
 func (p privilegedPathWriter) Run() error {
-	return WritePath(p.Dst, p.Src, *p.Wr)
+	return WritePath(p.Dst, p.Src, p.Wr)
 }
