@@ -28,5 +28,6 @@ func main() {
 			err = unwrap
 		}
 		slog.Error(err.Error())
+		os.Exit(1)
 	}
 }
