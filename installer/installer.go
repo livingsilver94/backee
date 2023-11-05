@@ -37,11 +37,12 @@ func (inst *Installer) Install(srv *service.Service) error {
 		return err
 	}
 	for level := depGraph.Depth() - 1; level >= 0; level-- {
-		for _, dep := range depGraph.Level(level).Slice() {
-			err := inst.installSingle(dep)
-			if err != nil {
-				return err
-			}
+		depGraph.Level(level).ForEach(func(dep *service.Service) bool {
+			err = inst.installSingle(dep)
+			return err == nil
+		})
+		if err != nil {
+			return err
 		}
 	}
 	return inst.installSingle(srv)
