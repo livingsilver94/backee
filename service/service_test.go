@@ -117,8 +117,8 @@ links:
 
 func TestParseLinksString(t *testing.T) {
 	expect := map[string]service.FilePath{
-		"/my/path/file1": {Path: "/tmp/alias1", Mode: 0644},
-		"my/path/file2":  {Path: "/tmp/alias2", Mode: 0o644},
+		"/my/path/file1": {Path: "/tmp/alias1", Mode: 0o000},
+		"my/path/file2":  {Path: "/tmp/alias2", Mode: 0o000},
 	}
 	const doc = `
 links:
@@ -202,8 +202,8 @@ copies:
 
 func TestParseCopiesString(t *testing.T) {
 	expect := map[string]service.FilePath{
-		"/my/path/file1": {Path: "/tmp/alias1", Mode: 0644},
-		"my/path/file2":  {Path: "/tmp/alias2", Mode: 0o644},
+		"/my/path/file1": {Path: "/tmp/alias1", Mode: 0o000},
+		"my/path/file2":  {Path: "/tmp/alias2", Mode: 0o000},
 	}
 	const doc = `
 copies:

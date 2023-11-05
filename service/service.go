@@ -145,7 +145,6 @@ type FilePath struct {
 }
 
 // UnmarshalYAML implements the yaml.Unmarshaler interface.
-// Mode defaults to 0644 if unspecified in the YAML node.
 func (lp *FilePath) UnmarshalYAML(node *yaml.Node) error {
 	switch node.Kind {
 	case yaml.ScalarNode:
@@ -155,7 +154,7 @@ func (lp *FilePath) UnmarshalYAML(node *yaml.Node) error {
 			return err
 		}
 		lp.Path = path
-		lp.Mode = 0644
+		lp.Mode = 0
 	default:
 		type noRecursion FilePath
 		var noRec noRecursion
