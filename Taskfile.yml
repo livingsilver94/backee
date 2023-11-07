@@ -1,0 +1,33 @@
+version: '3'
+
+vars:
+  BINNAME: "backee"
+  OUTPATH: "{{.ROOT_DIR}}/build/{{.BINNAME}}"
+
+tasks:
+  default:
+    cmds:
+      - task: build
+
+  build:
+    cmds:
+      - go build -o {{.OUTPATH}} -ldflags "-X github.com/livingsilver94/backee/cli.Version={{.VERSION}}" log.go main.go
+    vars:
+      VERSION:
+        sh: git describe --tags || git rev-parse HEAD
+
+  check:
+    cmds:
+      - go test ./...
+
+  install:
+    cmds:
+      - install -Dm00755 {{.OUTPATH}} -t {{.DESTDIR}}/{{.bindir}}
+    vars:
+      DESTDIR: /
+      prefix: /usr/local
+      bindir: "{{.prefix}}/bin"
+
+  clean:
+    cmds:
+      - rm -rf {{.OUTPATH}}
