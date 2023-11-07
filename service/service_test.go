@@ -15,8 +15,8 @@ func TestParseEmptyDocument(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if srv.Name != name {
-		t.Fatalf("expected name %s. Found %s", name, srv.Name)
+	if !reflect.DeepEqual(srv, service.New(name)) {
+		t.Fatalf("expected empty service %#v. Got %#v", service.New(name), srv)
 	}
 }
 
