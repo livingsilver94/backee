@@ -10,16 +10,16 @@ jobs:
       matrix:
         os: [macOS-latest, ubuntu-latest, windows-latest]
         version: [1.21.x]
-    name: Go ${{ matrix.version }} tests on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+    name: Go ${{matrix.version}} tests on ${{matrix.os}}
+    runs-on: ${{matrix.os}}
     steps:
-      - name: Set up Go ${{ matrix.version }}
-        uses: magnetikonline/action-golang-cache@v4
-        with:
-          go-version: ${{ matrix.version }}
-
       - name: Check out code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+
+      - name: Set up Go ${{matrix.version}}
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{matrix.version}}
 
       - name: Build code
         run: go-task
