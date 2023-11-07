@@ -7,6 +7,19 @@ import (
 	"github.com/livingsilver94/backee/service"
 )
 
+func TestNewDepGraph(t *testing.T) {
+	graph := repo.NewDepGraph(10)
+	if graph.Depth() != 0 {
+		t.Fatalf("expected initial depth zero. Got %d", graph.Depth())
+	}
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("Level() did not panic with an empty DepGraph")
+		}
+	}()
+	graph.Level(1) // Must panic since depth is zero.
+}
+
 func TestInsert1Level(t *testing.T) {
 	graph := repo.NewDepGraph(1)
 	service := &service.Service{Name: "serv1"}
