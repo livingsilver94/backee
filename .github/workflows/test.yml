@@ -25,10 +25,10 @@ jobs:
           go-version: ${{matrix.version}}
 
       - name: Build code
-        run: go-task
+        run: task
 
       - name: Run tests
-        run: go-task check
+        run: task check
   updateReports:
     name: Update reports
     needs: test
