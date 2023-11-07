@@ -9,15 +9,6 @@ import (
 	"github.com/livingsilver94/backee/service"
 )
 
-func TestAddParent(t *testing.T) {
-	cache := createVariables("key", "val")
-	cache.Insert("parent", "parentKey", service.VarValue{Kind: service.ClearText, Value: "parentValue"})
-	err := cache.AddParent(serviceName, "parent")
-	if err != nil {
-		t.Fatalf("expected nil error. Got %v", err)
-	}
-}
-
 func TestAddParentNoService(t *testing.T) {
 	cache := createVariables("key", "val")
 	cache.Insert("parent", "parentKey", service.VarValue{Kind: service.ClearText, Value: "parentValue"})
@@ -36,14 +27,14 @@ func TestAddParentNoParent(t *testing.T) {
 	}
 }
 
-func TestInsertClear(t *testing.T) {
+func TestInsertClearText(t *testing.T) {
 	cache := createVariables("key", "val")
 	if cache.Length() != 1 {
 		t.Fatalf("expected length %d. Got %d", 1, cache.Length())
 	}
 }
 
-func TestInsertTwice(t *testing.T) {
+func TestInsertClearTextTwice(t *testing.T) {
 	cache := createVariables("key", "value", "key", "boo!")
 	if cache.Length() != 1 {
 		t.Fatalf("expected length %d. Got %d", 1, cache.Length())
@@ -59,7 +50,7 @@ func (testVarStore) Value(key string) (value string, err error) {
 	return "testy" + key, nil
 }
 
-func TestInsertStore(t *testing.T) {
+func TestInsertVarStore(t *testing.T) {
 	const kind service.VarKind = "testKind"
 
 	cache := repo.NewVariables()
@@ -102,9 +93,11 @@ func TestGetNoVariable(t *testing.T) {
 }
 
 func TestParents(t *testing.T) {
+	const parentName = "parentName"
+
 	cache := createVariables("key", "val")
-	cache.Insert("parent", "parentKey", service.VarValue{Kind: service.ClearText, Value: "parentValue"})
-	err := cache.AddParent(serviceName, "parent")
+	cache.Insert(parentName, "parentKey", service.VarValue{Kind: service.ClearText, Value: "parentValue"})
+	err := cache.AddParent(serviceName, parentName)
 	if err != nil {
 		t.Fatalf("expected nil error. Got %v", err)
 	}
@@ -112,7 +105,7 @@ func TestParents(t *testing.T) {
 	if err != nil {
 		t.Fatalf("expected nil error. Got %v", err)
 	}
-	expected := []string{"parent"}
+	expected := []string{parentName}
 	if !reflect.DeepEqual(obtained, expected) {
 		t.Fatalf("expected parent list %v. Got %v", expected, obtained)
 	}
