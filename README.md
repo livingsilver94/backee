@@ -3,6 +3,8 @@
 
 </br>
 
+> ⚠️ Windows support is untested at the moment, and thus considered experimental.
+
 Backee is configuration restorer for Unix and Windows computers. It reads a series of `service.yaml` files that contain operating system dependencies, dependencies among other services and POSIX or Powershell scripts (the latter on Windows). Such sections are then used to restore services that a user wanted to backup, right at your fingertip.
 
 It also possible to restore files without scripts. The `links` step symbolic-links files to their destination path, while the  `copies` step *copies* files, optionally by editing them using a template engine, so that a file could be customized for a particular user or platform on-the-fly. You can think of Backee as an advanced dotfiles manager, whilst easy to use with its declarative definition files.
@@ -15,11 +17,23 @@ Services to be restored are represented by directories inside a parent directory
 
 Each service directory contains:
 
- - A `service.yaml` file, and/or multiple `service_variantName.yaml`. See further documentation below.
+ - A `service.yaml` file, and/or multiple `service_variantName.yaml`. See further documentation on variants below.
  - Optional `data` directory, containing files to process.
  - Optional `links` directory, containing files to be symlinked untouched.
 
-The following is `service.yaml`'s format:
+As an example, this directory tree contains two services named mysql and nginx. mysql contains the optional data directory to eventually restore *my.conf*.
+
+<pre>
+.
+├── <b>mysql</b>
+│   ├── data
+│   │   └── my.conf
+│   └── service.yaml
+└── <b>nginx</b>
+    └── service.yaml
+</pre>
+
+The following is `service.yaml`'s format in the basic form. Some keys support an extended format for more flexibility: see [`service.example.yaml`](service.example.yaml) to learn more.
 
 |Key|Type|Meaning|
 |---|---|---|
@@ -34,11 +48,9 @@ The following is `service.yaml`'s format:
 
 Keys are processed in the above order. Each key is optional, to the point it's (pointlessly) possible to write a no-op service.
 
-See `service.example.yaml` for a complete service definition file and learn about the extended form of some keys.
-
 ### Secret variables
 
-Backee supports KeepassXC as the secret manager for variables that shouldn't be disclosed. Use the `keepassxc` kind of variable for that. Ensure `keepassxc-cli` is available. See `backee --help` for how to pass the database path, username and password.
+Backee supports KeepassXC as the secret manager for variables that shouldn't be disclosed. Use the `keepassxc` kind of variable for that. Ensure `keepassxc-cli` is available. Run `backee install --help` to learn how to pass the database path, username and password.
 
 ## Variants
 
