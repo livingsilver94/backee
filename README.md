@@ -11,6 +11,10 @@ It also possible to restore files without scripts. The `links` step symbolic-lin
 
 Backee performs operations as the user that run it by default. On UNIX, If a permission is denied while copying or linking files, it retries by calling a privilege elevation utility. `sudo` and `doas` are supported at the moment.
 
+See it in action!
+
+[![asciicast](https://asciinema.org/a/hMEVqtjppGfROguT00eZFdyTQ.svg)](https://asciinema.org/a/hMEVqtjppGfROguT00eZFdyTQ)
+
 ## Configuration format
 
 Services to be restored are represented by directories inside a parent directory.
