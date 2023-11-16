@@ -1,3 +1,8 @@
+<!---
+SPDX-FileCopyrightText: Fabio Forni <development@redaril.me>
+SPDX-License-Identifier: CC0-1.0
+-->
+
 # Backee
 [![Go Report Card](https://goreportcard.com/badge/github.com/livingsilver94/backee)](https://goreportcard.com/report/github.com/livingsilver94/backee)
 

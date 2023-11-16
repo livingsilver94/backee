@@ -1,5 +1,8 @@
 //go:build unix
 
+// SPDX-FileCopyrightText: Fabio Forni <development@redaril.me>
+// SPDX-License-Identifier: MPL-2.0
+
 package installer_test
 
 import (

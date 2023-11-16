@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Fabio Forni <development@redaril.me>
+# SPDX-License-Identifier: MPL-2.0
+
 version: '3'
 
 vars:

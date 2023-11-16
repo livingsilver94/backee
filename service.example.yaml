@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Fabio Forni <development@redaril.me>
+# SPDX-License-Identifier: CC0-1.0
+
 # Example of a complete service.yaml.
 
 depends    :
