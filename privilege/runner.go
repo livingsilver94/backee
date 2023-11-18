@@ -9,7 +9,7 @@ import (
 )
 
 type Runner interface {
-	Run() error
+	RunPrivileged() error
 }
 
 func RegisterInterfaceImpl(impl any) {

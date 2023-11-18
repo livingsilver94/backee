@@ -175,6 +175,6 @@ type privilegedPathWriter struct {
 	Wr  FileWriter
 }
 
-func (p privilegedPathWriter) Run() error {
+func (p privilegedPathWriter) RunPrivileged() error {
 	return WritePath(p.Dst, p.Src, p.Wr)
 }

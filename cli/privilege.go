@@ -17,5 +17,5 @@ func (p privilege) Run() error {
 	if err != nil {
 		return err
 	}
-	return run.Run()
+	return run.RunPrivileged()
 }
