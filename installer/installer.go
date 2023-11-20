@@ -15,6 +15,7 @@ type Installer struct {
 	repository repo.Repo
 	variables  repo.Variables
 	list       List
+	writer     StepWriter
 }
 
 func New(repository repo.Repo, options ...Option) Installer {
@@ -22,6 +23,7 @@ func New(repository repo.Repo, options ...Option) Installer {
 		repository: repository,
 		variables:  repo.NewVariables(),
 		list:       NewList(),
+		writer:     nil, // TODO: pass a real writer.
 	}
 	i.variables.RegisterSolver(service.Datadir, solver.NewDatadir(repository))
 	for _, option := range options {
@@ -41,41 +43,52 @@ func (inst *Installer) Install(srv *service.Service) error {
 	}
 	for level := depGraph.Depth() - 1; level >= 0; level-- {
 		depGraph.Level(level).ForEach(func(dep *service.Service) bool {
-			err = inst.installSingle(dep)
+			err = inst.InstallSingle(dep)
 			return err == nil
 		})
 		if err != nil {
 			return err
 		}
 	}
-	return inst.installSingle(srv)
+	return inst.InstallSingle(srv)
 }
 
-func (inst *Installer) installSingle(srv *service.Service) error {
-	log := slog.Default().WithGroup(srv.Name)
+func (inst *Installer) InstallSingle(srv *service.Service) error {
 	if inst.list.Contains(srv.Name) {
-		log.Info("Already installed")
+		slog.Default().WithGroup(srv.Name).Info("Already installed")
 		return nil
 	}
 	err := inst.variables.InsertMany(srv.Name, srv.Variables)
 	if err != nil {
 		return err
 	}
-	repl := NewTemplate(srv.Name, inst.variables)
-	steps := []Step{
-		Setup{},
-		OSPackages{},
-		NewSymlinks(inst.repository, repl),
-		NewCopies(inst.repository, repl),
-		NewFinalization(repl),
+	err = inst.runAllSteps(srv)
+	if err != nil {
+		return err
 	}
-	for _, step := range steps {
-		err := step.Run(log, srv)
+	inst.list.Insert(srv.Name)
+	return nil
+}
+
+func (inst *Installer) Steps(srv *service.Service) Steps {
+	return NewSteps(srv, inst.writer)
+}
+
+func (inst *Installer) runAllSteps(srv *service.Service) error {
+	steps := inst.Steps(srv)
+	list := []func() error{
+		func() error { return steps.Setup() },
+		func() error { return steps.InstallPackages() },
+		func() error { return steps.LinkFiles(inst.repository, inst.variables) },
+		func() error { return steps.CopyFiles(inst.repository, inst.variables) },
+		func() error { return steps.Finalize(inst.variables) },
+	}
+	for _, step := range list {
+		err := step()
 		if err != nil {
 			return err
 		}
 	}
-	inst.list.Insert(srv.Name)
 	return nil
 }
 
@@ -98,5 +111,11 @@ func WithVarSolvers(solvs map[service.VarKind]repo.VarSolver) Option {
 func WithList(li List) Option {
 	return func(i *Installer) {
 		i.list = li
+	}
+}
+
+func WithStepWriter(sw StepWriter) Option {
+	return func(i *Installer) {
+		i.writer = sw
 	}
 }
