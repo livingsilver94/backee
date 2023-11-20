@@ -108,7 +108,7 @@ func (f Finalization) Run(log *slog.Logger, srv *service.Service) error {
 	}
 	log.Info("Running finalizer script")
 	var script strings.Builder
-	err := f.repl.ReplaceString(*srv.Finalize, &script)
+	_, err := f.repl.ReplaceString(*srv.Finalize, &script)
 	if err != nil {
 		return err
 	}
@@ -125,7 +125,7 @@ func runProcess(name string, arg ...string) error {
 func writeFiles(files map[string]service.FilePath, baseDir string, repl Template, wr FileWriter) error {
 	var resolvedDst strings.Builder
 	for srcFile, dstFile := range files {
-		err := repl.ReplaceString(dstFile.Path, &resolvedDst)
+		_, err := repl.ReplaceString(dstFile.Path, &resolvedDst)
 		if err != nil {
 			return err
 		}

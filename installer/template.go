@@ -44,14 +44,13 @@ func (t Template) Replace(r io.Reader, w io.Writer) error {
 	return scanner.Err()
 }
 
-func (t Template) ReplaceString(s string, w io.Writer) error {
-	_, err := fasttemplate.ExecuteFunc(
+func (t Template) ReplaceString(s string, w io.Writer) (int64, error) {
+	return fasttemplate.ExecuteFunc(
 		s,
 		service.VarOpenTag, service.VarCloseTag,
 		w,
 		t.replaceTag,
 	)
-	return err
 }
 
 func (t Template) ReplaceStringToString(s string) (string, error) {

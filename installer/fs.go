@@ -162,7 +162,7 @@ func (w *CopyWriter) WriteDestination(dst string) error {
 	}
 	defer dstFile.Close()
 	buff := bufio.NewWriter(dstFile)
-	err = w.repl.ReplaceString(w.srcContent, buff)
+	_, err = w.repl.ReplaceString(w.srcContent, buff)
 	if err != nil {
 		return err
 	}
