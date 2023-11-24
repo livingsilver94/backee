@@ -6,7 +6,7 @@ package cli
 import (
 	"os"
 
-	_ "github.com/livingsilver94/backee/installer"
+	_ "github.com/livingsilver94/backee/installer/stepwriter"
 	priv "github.com/livingsilver94/backee/privilege"
 )
 

@@ -13,17 +13,18 @@ import (
 
 type Installer struct {
 	repository repo.Repo
-	variables  repo.Variables
-	list       List
 	writer     StepWriter
+
+	variables repo.Variables
+	list      List
 }
 
-func New(repository repo.Repo, options ...Option) Installer {
+func New(repository repo.Repo, sw StepWriter, options ...Option) Installer {
 	i := Installer{
 		repository: repository,
+		writer:     sw,
 		variables:  repo.NewVariables(),
 		list:       NewList(),
-		writer:     nil, // TODO: pass a real writer.
 	}
 	i.variables.RegisterSolver(service.Datadir, solver.NewDatadir(repository))
 	for _, option := range options {

@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/livingsilver94/backee/installer"
+	"github.com/livingsilver94/backee/installer/stepwriter"
 	"github.com/livingsilver94/backee/repo"
 	"github.com/livingsilver94/backee/repo/solver"
 	"github.com/livingsilver94/backee/service"
@@ -22,6 +23,7 @@ type keepassXC struct {
 
 type install struct {
 	Directory  string    `short:"C" type:"existingdir" help:"Change the base directory."`
+	DryRun     bool      `short:"d" help:"Test the installation without writing any file."`
 	KeepassXC  keepassXC `embed:"" prefix:"keepassxc."`
 	PkgManager []string  `name:"pkgmanager" help:"Override the package manager command for services."`
 	Variant    string    `help:"Specify the system variant."`
@@ -99,6 +101,10 @@ func (in *install) installer(rep repo.FS, fileList **os.File) installer.Installe
 		}
 	}
 
+	writ := installer.StepWriter(stepwriter.OS{})
+	if in.DryRun {
+		writ = stepwriter.DryRun{}
+	}
 	opts := []installer.Option{
 		installer.WithCommonVars(envVars()),
 		installer.WithList(list),
@@ -110,7 +116,7 @@ func (in *install) installer(rep repo.FS, fileList **os.File) installer.Installe
 			installer.WithVarSolvers(map[service.VarKind]repo.VarSolver{"keepassxc": kee}),
 		)
 	}
-	return installer.New(rep, opts...)
+	return installer.New(rep, writ, opts...)
 }
 
 // envVars returns a map of environment variables.
