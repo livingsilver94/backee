@@ -50,10 +50,10 @@ func NewVariables() Variables {
 func (vars Variables) AddParent(srv, parent string) error {
 	val, ok := vars.resolved[srv]
 	if !ok {
-		return ErrNoService
+		return errNoService(srv)
 	}
 	if _, ok := vars.resolved[parent]; !ok {
-		return ErrNoService
+		return errNoService(parent)
 	}
 	val.Parents = append(val.Parents, parent)
 	vars.resolved[srv] = val
@@ -64,14 +64,14 @@ func (vars Variables) AddParent(srv, parent string) error {
 // If the value is not clear text, it is resolved immediately and then cached.
 // If key is already present for srv, Insert is no-op.
 func (vars Variables) Insert(srv, key string, val service.VarValue) error {
-	switch _, err := vars.Get(srv, key); err {
-	case ErrNoService:
-		vars.resolved[srv] = value{Vars: make(map[string]string)}
-	case ErrNoVariable:
-		break
-	default:
+	_, err := vars.Get(srv, key)
+	if err == nil {
 		return nil
 	}
+	if errors.Is(err, ErrNoService) {
+		vars.resolved[srv] = value{Vars: make(map[string]string)}
+	}
+
 	var v string
 	if kind := val.Kind; kind == service.ClearText {
 		v = val.Value
@@ -106,7 +106,7 @@ func (vars Variables) InsertMany(srv string, values map[string]service.VarValue)
 func (vars Variables) Parents(srv string) ([]string, error) {
 	val, ok := vars.resolved[srv]
 	if !ok {
-		return nil, ErrNoService
+		return nil, errNoService(srv)
 	}
 	return val.Parents, nil
 }
@@ -114,16 +114,16 @@ func (vars Variables) Parents(srv string) ([]string, error) {
 // Get returns the value of a Service's variable, previously cached via Insert.
 // If srv does not exist, ErrNoService is returned.
 // If key does not exist, ErrNoVariable is returned.
-func (vars Variables) Get(service, key string) (string, error) {
-	val, ok := vars.resolved[service]
+func (vars Variables) Get(srv, key string) (string, error) {
+	val, ok := vars.resolved[srv]
 	if !ok {
-		return "", ErrNoService
+		return "", errNoService(srv)
 	}
 	variable, ok := val.Vars[key]
 	if !ok {
 		v, ok := vars.Common[key]
 		if !ok {
-			return "", ErrNoVariable
+			return "", errNoVariable(key)
 		}
 		variable = v
 	}
@@ -179,4 +179,12 @@ func (vars *Variables) GobDecode(data []byte) error {
 type value struct {
 	Parents []string
 	Vars    map[string]string
+}
+
+func errNoService(name string) error {
+	return fmt.Errorf("%q %w", name, ErrNoService)
+}
+
+func errNoVariable(name string) error {
+	return fmt.Errorf("%q %w", name, ErrNoVariable)
 }
