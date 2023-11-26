@@ -89,14 +89,15 @@ func (t *Template) GobDecode(data []byte) error {
 }
 
 func (t Template) replaceTag(w io.Writer, varName string) (int, error) {
-	if val, err := t.variables.Get(t.serviceName, varName); err == nil {
+	val, err := t.variables.Get(t.serviceName, varName)
+	if err == nil {
 		// Matched a variable local to the service.
 		return w.Write([]byte(val))
 	}
 
 	parentName, parentVar, found := strings.Cut(varName, service.VarParentSep)
 	if !found {
-		return 0, repo.ErrNoVariable
+		return 0, err
 	}
 	parents, _ := t.variables.Parents(t.serviceName)
 	for _, parent := range parents {
@@ -109,7 +110,7 @@ func (t Template) replaceTag(w io.Writer, varName string) (int, error) {
 		}
 		break
 	}
-	return 0, repo.ErrNoVariable
+	return 0, err
 }
 
 // greedyTagSplitter is a bufio.SplitFunc that reads
