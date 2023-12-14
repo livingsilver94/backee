@@ -6,6 +6,7 @@ package stepwriter
 import (
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"strings"
 
@@ -17,6 +18,10 @@ type DryRun struct {
 	// Dest is where messages are written to.
 	// When nil, it defaults to [os.Stdout].
 	Dest io.Writer
+
+	// FS is the filesystem from where files are fetched.
+	// When nil, it defaults to the current directory.
+	FS fs.FS
 }
 
 func (d DryRun) Setup(script string) error {
@@ -30,7 +35,12 @@ func (d DryRun) InstallPackages(fullCmd []string) error {
 }
 
 func (d DryRun) SymlinkFile(dst service.FilePath, src string) error {
-	_, err := d.printf("%s\t➜ %s", src, dst.Path)
+	ok, err := d.fileAccessible(src)
+	if !ok {
+		return err
+	}
+
+	_, err = d.printf("%s\t➜ %s", src, dst.Path)
 	if err != nil {
 		return err
 	}
@@ -66,6 +76,20 @@ func (d DryRun) CopyFile(dst service.FilePath, src installer.FileCopy) error {
 func (d DryRun) Finalize(script string) error {
 	_, err := fmt.Print(script)
 	return err
+}
+
+func (d DryRun) fileAccessible(path string) (bool, error) {
+	f := d.FS
+	if f == nil {
+		f = os.DirFS(".")
+	}
+	file, err := f.Open(path)
+	if err != nil {
+		_, err = d.printf("Error opening %s: %s", path, err)
+		return false, err
+	}
+	defer file.Close()
+	return true, nil
 }
 
 func (d DryRun) print(a ...any) (n int, err error) {
