@@ -103,7 +103,9 @@ func (in *install) installer(rep repo.FS, fileList **os.File) installer.Installe
 
 	writ := installer.StepWriter(stepwriter.OS{})
 	if in.DryRun {
-		writ = stepwriter.DryRun{}
+		writ = stepwriter.DryRun{
+			FS: repo.NewOSFS(in.Directory),
+		}
 	}
 	opts := []installer.Option{
 		installer.WithCommonVars(envVars()),
